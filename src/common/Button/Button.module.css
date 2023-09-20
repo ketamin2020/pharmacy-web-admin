@@ -1,0 +1,62 @@
+.button {
+  border-radius: 25px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  transition: var(--trans);
+  font-family: var(--primeFont);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.green {
+  background: var(--whiteColor);
+  border: 1px solid var(--greenColor);
+  font-style: normal;
+  font-weight: normal;
+  font-size: 18px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--greenColor);
+  box-shadow: 0px 3px 4px var(--greenColor) (8, 255, 20, 0.3);
+}
+.green:hover {
+  background: var(--greenColor);
+  color: var(--whiteColor);
+  border: 1px solid var(--whiteColor);
+}
+
+.white {
+  background: var(--whiteColor);
+  border: 1px solid var(--orangeColor);
+  font-style: normal;
+  font-weight: normal;
+  font-size: 18px;
+  line-height: 22px;
+  text-align: center;
+  color: var(--orangeColor);
+  box-shadow: 0px 3px 4px rgba(255, 107, 8, 0.3);
+}
+.white:hover {
+  background: var(--orangeColor);
+  color: var(--whiteColor);
+}
+
+.circle {
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  transition: var(--trans);
+}
+
+.oval {
+  width: 154px;
+  height: 44px;
+  transition: var(--trans);
+}
+
+.square {
+  width: 260px;
+  height: 44px;
+}

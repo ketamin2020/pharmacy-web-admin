@@ -1,0 +1,33 @@
+$break-points: (
+  mobile: 480px,
+  tablet: 720px,
+  desktopS: 960px,
+  desktop: 1240px,
+  desktopHD: 1920px,
+);
+
+@mixin mobile() {
+  @media screen and (max-width: 480px) {
+    @content;
+  }
+}
+@mixin tablet() {
+  @media screen and (max-width: 720px) {
+    @content;
+  }
+}
+@mixin desktopS() {
+  @media screen and (min-width: 960px) {
+    @content;
+  }
+}
+@mixin desktop() {
+  @media screen and (min-width: 1240px) {
+    @content;
+  }
+}
+@mixin desktopHD() {
+  @media screen and (max-width: 1920px) {
+    @content;
+  }
+}

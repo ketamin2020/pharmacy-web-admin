@@ -1,0 +1,42 @@
+body {
+  letter-spacing: 0.02em;
+  font-family: var(--primeFont);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--primeFont);
+}
+
+a {
+  color: var(--blueColor);
+  &:hover {
+    color: var(--redColor);
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .mobile__hidden {
+    display: none !important;
+  }
+  .desktop__hidden {
+    display: block;
+  }
+}
+@media screen and (min-width: 721px) {
+  .mobile__hidden {
+    display: block;
+  }
+  .desktop__hidden {
+    display: none !important;
+  }
+}
+
+//for tiny editor notification
+.tox-tinymce-aux {
+  display: none !important;
+}
+
+#webpack-dev-server-client-overlay {
+  display: none;
+}

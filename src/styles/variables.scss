@@ -1,0 +1,34 @@
+:root {
+  //my
+  --primeFont: 'Montserrat', sans-serif;
+  --backgroundColorGrey: #394556;
+  --whiteColor: #ffffff;
+  --darkColor: #212529;
+  --greenColor: #00a990;
+  --blueColor: #1976d2;
+  --redColor: #f36;
+  --greenColorSecondary: #00a046;
+
+  --trans: all 0.25s ease-in-out;
+  //---
+
+  --orangeColor: #ff6b08;
+  --backgroundColor: #f1f2f7;
+
+  --formColor: #fafafa;
+  --whiteColor: #ffffff;
+  --blackColor: #181c27;
+  --greyColor: rgba(24, 28, 39, 0.6);
+  --borderColor: rgba(24, 28, 39, 0.1);
+  --primaryOvale: #f3ad17;
+  --secondaryOvale: #f16609;
+  --thirdOvale: #e27fcb;
+  --fouthOvale: #ff6b07;
+
+  --min1024: screen and (min-width: 1280px);
+  --min768: screen and (min-width: 768px);
+  --mx767: screen and (max-width: 767px);
+
+  --timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-duration: 250ms;
+}

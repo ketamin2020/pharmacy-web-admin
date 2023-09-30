@@ -3,7 +3,7 @@ import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react'
 import { Suspense } from 'react'
 
-import { Router } from 'routes/Router'
+import { Builder } from 'Builder'
 import { persistor, store } from 'store/store'
 
 import ErrorBoundary from 'utils/ErrorBoundary/ErrorBoundary'
@@ -24,7 +24,7 @@ const App = () => {
           <BrowserRouter>
             <Suspense fallback={null}>
               <ErrorBoundary>
-                <Router />
+                <Builder />
                 <ToastContainer hideProgressBar={true} theme='dark' />
               </ErrorBoundary>
             </Suspense>

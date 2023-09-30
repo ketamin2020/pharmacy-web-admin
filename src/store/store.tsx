@@ -6,14 +6,16 @@ import storage from 'redux-persist/lib/storage'
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 
 import auth from 'features/Login/authSlice'
+import ui from './ui/UISlice'
 
 const persistConfig = {
-  key: 'auth',
+  key: 'artmed_auth',
   storage,
 }
 
 const rootReducer = combineReducers({
   auth: persistReducer(persistConfig, auth),
+  ui,
 })
 
 const reducerProxy = (state: any, action: AnyAction) => {

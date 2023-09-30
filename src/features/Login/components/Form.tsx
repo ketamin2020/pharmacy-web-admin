@@ -39,7 +39,7 @@ export const Form: React.FC<IProps> = ({ state, error, handleSubmit, handleChang
           <InputBox>
             <Typography.Text style={{ color: 'white', padding: '4px', fontSize: '12px' }}>Email</Typography.Text>
             <Input
-              style={{ height: '40px', padding: '4px 4px 4px 10px' }}
+              style={{ color: 'white', height: '40px', padding: '4px 4px 4px 10px' }}
               type='email'
               name='email'
               onChange={handleChange}
@@ -53,6 +53,7 @@ export const Form: React.FC<IProps> = ({ state, error, handleSubmit, handleChang
           <InputBox>
             <Typography.Text style={{ color: 'white', padding: '4px', fontSize: '12px' }}>Password</Typography.Text>
             <Input.Password
+              style={{ color: 'white' }}
               name='password'
               onChange={handleChange}
               placeholder='Enter your password...'

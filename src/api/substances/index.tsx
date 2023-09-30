@@ -7,7 +7,7 @@ const UPDATE_SUBSTANCE = 'api/substances/update'
 const DELETE_SUBSTANCE = 'api/substances/delete'
 
 export const getSubstances = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_SUBSTANCES, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_SUBSTANCES, { params }).then(res => res?.data?.data)
 }
 export const createSubstance = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_SUBSTANCE, params).then(res => res)

@@ -7,7 +7,7 @@ const UPDATE_MAKER = 'api/makers/update'
 const DELETE_MAKER = 'api/makers/delete'
 
 export const getMakers = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_MAKERS, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_MAKERS, { params }).then(res => res?.data?.data)
 }
 export const createMaker = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_MAKER, params).then(res => res)

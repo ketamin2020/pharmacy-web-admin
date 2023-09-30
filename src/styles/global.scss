@@ -40,3 +40,20 @@ a {
 #webpack-dev-server-client-overlay {
   display: none;
 }
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  transition: background-color 10000s ease-in-out 0s !important;
+}
+
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 50px #201d2c inset;
+  -webkit-text-fill-color: white;
+}
+
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 50px #201d2c inset;
+  -webkit-text-fill-color: white;
+}

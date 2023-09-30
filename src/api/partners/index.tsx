@@ -7,7 +7,7 @@ const UPDATE_PARTNER = 'api/partners/update'
 const DELETE_PARTNER = 'api/partners/delete'
 
 export const getPartners = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_PARTNERS, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_PARTNERS, { params }).then(res => res?.data?.data)
 }
 export const createPartner = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_PARTNER, params).then(res => res)

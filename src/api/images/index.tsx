@@ -7,7 +7,7 @@ const UPDATE_IMAGES = 'api/images/update'
 const DELETE_IMAGES = 'api/images/delete'
 
 export const getImages = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_IMAGES, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_IMAGES, { params }).then(res => res?.data?.data)
 }
 export const createImages = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_IMAGES, params).then(res => res.data.data)

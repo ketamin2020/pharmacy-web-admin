@@ -7,7 +7,7 @@ const UPDATE_BRAND = 'api/brands/update'
 const DELETE_BRAND = 'api/brands/delete'
 
 export const getBrands = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_BRANDS, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_BRANDS, { params }).then(res => res?.data?.data)
 }
 export const createBrand = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_BRAND, params).then(res => res)

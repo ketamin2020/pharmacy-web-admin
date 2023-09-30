@@ -6,7 +6,7 @@ const CREATE_BANNER = 'api/banner/create'
 const DELETE_BANNER = 'api/banner/delete'
 
 export const getBanners = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_BANNERS, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_BANNERS, { params }).then(res => res?.data?.data)
 }
 export const createBanner = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_BANNER, params).then(res => res)

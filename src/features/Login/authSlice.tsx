@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { login, logout } from 'api/auth'
+import { loginUserAdmin, logoutUserAdmin } from 'api/authAdmin'
 import { RootState } from 'store/store'
-import { IUser } from 'types/User'
+import notification from 'common/Notification/Notification'
 
 interface AuthState {
   loading: boolean
@@ -23,7 +23,7 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async ({ email, password }: LoginCredentials, { rejectWithValue }) => {
     try {
-      const res = await login({ email, password })
+      const res = await loginUserAdmin({ email, password })
 
       return res
     } catch (error) {
@@ -38,9 +38,9 @@ export const loginUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue, getState, dispatch }) => {
   const refreshToken = (getState() as RootState).auth.tokens?.refresh?.token
   try {
-    await logout({ refreshToken })
+    await logoutUserAdmin({ refreshToken })
     dispatch(logoutApp())
-    localStorage.setItem('persist:auth', '')
+    localStorage.setItem('persist:artmed-auth', '')
   } catch (error) {
     if (error.response && error.response.data.message) {
       return rejectWithValue(error.response.data.message)
@@ -66,36 +66,37 @@ const authSlice = createSlice({
       state = initialState
     },
   },
-  // extraReducers: {
-  //   //LOGIN
-  //   [loginUser.pending]: state => {
-  //     state.loading = true
-  //     state.error = null
-  //   },
-  //   [loginUser.fulfilled]: (state, { payload }) => {
-  //     state.loading = false
-  //     state.success = true
-  //     state.user = payload.user
-  //     state.tokens = payload.tokens
-  //   },
-  //   [loginUser.rejected]: (state, { payload }) => {
-  //     state.loading = false
-  //     state.success = false
-  //     state.error = payload
-  //   },
-  //   //LOGOUT
-  //   [logoutUser.pending]: state => {
-  //     state.loading = true
-  //     state.error = null
-  //   },
-  //   [logoutUser.fulfilled]: state => {
-  //     state = initialState
-  //   },
-  //   [logoutUser.rejected]: (state, { payload }) => {
-  //     state.loading = false
-  //     state.error = payload
-  //   },
-  // },
+  extraReducers: {
+    //LOGIN
+    [loginUser.pending]: state => {
+      state.loading = true
+      state.error = null
+    },
+    [loginUser.fulfilled]: (state, { payload }) => {
+      state.loading = false
+      state.success = true
+      state.user = payload.user
+      state.tokens = payload.tokens
+    },
+    [loginUser.rejected]: (state, { payload }) => {
+      state.loading = false
+      state.success = false
+      state.error = payload
+      notification('error', payload)
+    },
+    //LOGOUT
+    [logoutUser.pending]: state => {
+      state.loading = true
+      state.error = null
+    },
+    [logoutUser.fulfilled]: state => {
+      state = initialState
+    },
+    [logoutUser.rejected]: (state, { payload }) => {
+      state.loading = false
+      state.error = payload
+    },
+  },
 })
 
 export const { logoutApp } = authSlice.actions

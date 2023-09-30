@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getTokenFromLS } from 'utils/getTokenFromLS'
 import moment from 'moment-timezone'
+import { store } from 'store/store'
 
 const axiosInstance = (() => {
   const params = {}
@@ -8,7 +9,7 @@ const axiosInstance = (() => {
     Accept: 'application/json',
     'Content-Type': 'application/json; charset=utf-8',
 
-    'X-timezone': moment.tz.guess(), // Custom header with current user's timezone
+    'X-timezone': moment.tz.guess(),
   }
 
   return axios.create({
@@ -20,10 +21,7 @@ const axiosInstance = (() => {
 
 axiosInstance.interceptors.request.use(
   config => {
-    // const auth = JSON.parse(localStorage.getItem('persist:auth'))
-    // const trimmedToken = auth?.token?.slice(1, -1).replace(/\\/g, '')
-
-    const token = getTokenFromLS()
+    const token = store.getState().auth.tokens?.refresh?.token
 
     if (token) config.headers.Authorization = `Bearer ${token}`
 

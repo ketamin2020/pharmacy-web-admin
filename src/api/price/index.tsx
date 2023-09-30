@@ -8,7 +8,7 @@ const DELETE_DELETE = 'api/price/delete'
 const UPLOAD_PRICE = 'api/price/upload'
 
 export const getPrices = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_PRICES, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_PRICES, { params }).then(res => res?.data?.data)
 }
 export const createPrice = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_PRICE, params).then(res => res)

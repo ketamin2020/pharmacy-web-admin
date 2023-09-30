@@ -7,7 +7,7 @@ const UPDATE_INSTRUCTION = 'api/instructions/update'
 const DELETE_INSTRUCTION = 'api/instructions/delete'
 
 export const getInstructions = params => {
-  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_INSTRUCTIONS, params).then(res => res?.data?.data)
+  return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_INSTRUCTIONS, { params }).then(res => res?.data?.data)
 }
 export const createInstruction = params => {
   return axiosInstance.post<AxiosResponse<{ data: object }>>(CREATE_INSTRUCTION, params).then(res => res)

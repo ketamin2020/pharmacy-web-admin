@@ -78,7 +78,7 @@ export const Login = () => {
 
   useEffect(() => {
     if (success) {
-      navigate(redirectTo || RoutesPath.LEADS)
+      navigate('/admin')
     }
   }, [success])
 

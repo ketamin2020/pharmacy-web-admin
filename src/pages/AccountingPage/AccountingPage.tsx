@@ -1,11 +1,11 @@
 import React from 'react'
 import { MainLayout } from 'layouts/MainLayout'
-import Dashboard from 'features/Dashboard'
+import Accounting from 'features/Accounting'
 
-export const DashboardPage = () => {
+export const AccountingPage = () => {
   return (
     <MainLayout>
-      <Dashboard />
+      <Accounting />
     </MainLayout>
   )
 }

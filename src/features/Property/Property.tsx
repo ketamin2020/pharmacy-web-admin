@@ -352,18 +352,18 @@ export const Property = () => {
 
   const fetchSubstanceList = async () => {
     try {
-      const res = await getSubstances()
+      const { data } = await getSubstances()
 
-      setOptions(res)
+      setOptions(data)
     } catch (error) {
       notification('error', 'Something went wrong!')
     }
   }
   const fetchMakersList = async () => {
     try {
-      const res = await getMakers()
+      const { data } = await getMakers()
 
-      setMakers(res)
+      setMakers(data)
     } catch (error) {
       notification('error', 'Something went wrong!')
     }

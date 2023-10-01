@@ -1,14 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout, Menu, theme, Typography, Dropdown } from 'antd'
-import {
-  DesktopOutlined,
-  PieChartOutlined,
-  TeamOutlined,
-  UserOutlined,
-  DeleteOutlined,
-  SettingOutlined,
-} from '@ant-design/icons'
+import { PieChartOutlined, UserOutlined, SettingOutlined } from '@ant-design/icons'
 import { RoutePath } from 'routes/types'
 import { Avatar } from 'components/Avatar/Avatar'
 import type { MenuProps } from 'antd'
@@ -17,13 +10,12 @@ import { lastModuleVisited } from 'utils/lastModuleVisited'
 import styled from '@emotion/styled'
 
 import { useAppSelector } from 'store/store'
-// import { toggleTheme, toggleLoading } from 'store/ui/UISlice'
+import { toggleTheme } from 'store/ui/UISlice'
 import { useDispatch } from 'react-redux'
-// import { Loader } from 'components/Loader/Loader'
-import { logoutUser } from 'features/Login/authSlice'
-// import { resetToken } from 'store/auth/authSlice'
 
-const { Content, Footer, Sider } = Layout
+import { logoutUser } from 'features/Login/authSlice'
+
+const { Content, Sider } = Layout
 
 type MenuItem = Required<MenuProps>['items'][number]
 
@@ -52,31 +44,31 @@ const items: MenuItem[] = [
   getItem('Groups', RoutePath.GROUPS, <PieChartOutlined />),
   getItem('Substance', RoutePath.SUBSTANCE, <PieChartOutlined />),
   getItem('Makers', RoutePath.MAKERS, <PieChartOutlined />),
+  getItem('Accounting', RoutePath.ACCOUNTING, <PieChartOutlined />),
 ]
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const appTheme = useAppSelector(state => state.ui.theme)
-  const loading = useAppSelector(state => state.ui.loading)
+  const authUser = useAppSelector(state => state.auth.user)
   const [collapsed, setCollapsed] = useState(false)
   const {
     token: { colorBgContainer },
   } = theme.useToken()
 
-  const handleMenuItemClick = (key: RoutesPath) => {
-    // dispatch(toggleLoading(true))
-
+  const handleMenuItemClick = (key: RoutePath) => {
     navigate(key)
     lastModuleVisited('set', key)
   }
 
   const toggleAppTheme = () => {
-    // dispatch(toggleTheme())
+    dispatch(toggleTheme())
   }
 
   const handleLogout = () => {
     dispatch(logoutUser())
+
     navigate(RoutePath.LOGIN)
   }
 
@@ -112,15 +104,14 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
         <Dropdown trigger={['hover']} menu={{ items: itemsDropdown }}>
           <a onClick={e => e.preventDefault()}>
             <AvatarContainer>
-              <Avatar color={'#1668dc'}>Max Kovalenko</Avatar>
-              {!collapsed && <Typography.Text>Max Kovalenko</Typography.Text>}
+              <Avatar color={'#1668dc'}>{`${authUser?.first_name} ${authUser?.last_name}`}</Avatar>
+              {!collapsed && <Typography.Text>{`${authUser?.first_name} ${authUser?.last_name}`}</Typography.Text>}
             </AvatarContainer>
           </a>
         </Dropdown>
       </SiderContainer>
 
       <Layout style={{ position: 'relative' }}>
-        {/* <Header style={{ padding: 0, background: colorBgContainer }} /> */}
         <Content style={{ margin: '24px 16px 0', overflow: 'scroll' }}>
           <div
             style={{
@@ -132,14 +123,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             {children}
           </div>
         </Content>
-        {/* <Footer style={{ textAlign: 'center' }}>
-          <Typography.Text>Sky CRM ©2023</Typography.Text>
-        </Footer> */}
       </Layout>
-
-      {/* <LoaderWrapper loading={loading}>
-        <Loader />
-      </LoaderWrapper> */}
     </Layout>
   )
 }
@@ -165,38 +149,3 @@ const AvatarContainer = styled.div`
   gap: 10px;
   padding: 10px;
 `
-
-// const fadeInAnimation = Keyframes`
-//   from {
-//     width: 0;
-//     height: 0;
-//   }
-//   to {
-//     width: 100vw;
-//     height: 100vh;
-//   }
-// `
-
-// const fadeOutAnimation = Keyframes`
-//   from {
-//     width: 100vw;
-//     height: 100vh;
-//   }
-//   to {
-//     width: 0;
-//     height: 0;
-//   }
-// `
-// const LoaderWrapper = styled.div`
-//   position: absolute;
-//   top: 0;
-//   left: 0;
-//   width: ${({ loading }) => (loading ? '100vw' : '0')};
-//   height: ${({ loading }) => (loading ? '100vh' : '0')};
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-//   background-color: #002140;
-//   z-index: 100;
-//   animation: ${({ loading }) => (loading ? '' : fadeOutAnimation)} 200ms cubic-bezier(0.39, 0.575, 0.565, 1) forwards;
-// `

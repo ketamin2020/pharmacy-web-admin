@@ -112,6 +112,13 @@ export const PrivateRouter = () => {
         element: lazyWithRetry(() => import('../pages/MakersPage')),
         isAccess: true,
       },
+      {
+        path: RoutePath.ACCOUNTING,
+        title: 'Accounting',
+        exact: true,
+        element: lazyWithRetry(() => import('../pages/AccountingPage')),
+        isAccess: true,
+      },
     ],
     [window.location.pathname],
   )

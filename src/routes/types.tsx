@@ -18,6 +18,7 @@ enum RoutePath {
   WORKERS = '/workers',
   APPLICACTION = '/application',
   PRICES = '/prices',
+  ACCOUNTING = '/accounting',
 }
 
 interface Routes {

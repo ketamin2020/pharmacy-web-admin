@@ -1,7 +1,7 @@
 import axiosInstance from 'services/axiosInstance'
 import { AxiosResponse } from 'axios'
 
-const GET_DRUGS_LIST = 'api/drugs/drugs-list'
+const GET_DRUGS_LIST = '/api/admin-drugs/admin-drugs-list'
 const GET_DRUGS = 'api/drugs/drug'
 const GET_MEDICINES_GROUP = 'api/drugs/medicines-group'
 const SEARCH_ADDRESS = 'api/drugs/search-address'

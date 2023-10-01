@@ -1,26 +1,22 @@
 /* eslint-disable no-irregular-whitespace */
 import * as React from 'react'
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { priceToView } from 'utils/priceToView'
 import Box from '@mui/material/Box'
 
-import IconButton from '@mui/material/IconButton'
-
-import Button from '@mui/material/Button'
-import { styled as Style } from '@mui/material/styles'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-import CloseIcon from '@mui/icons-material/Close'
+
 import { TextField } from '@mui/material'
 
 import { getPrices, createPrice, updatePrice, deletePrice, uploadPrice } from 'api/price'
 import { getPartners } from 'api/partners'
-import { uploadSingleFile } from 'api/media'
+
 import notification from 'common/Notification/Notification'
 import moment from 'moment'
-import styled from '@emotion/styled'
+
 import { ImportModal } from 'components/modals/ImportModal'
 import Autocomplete from '@mui/material/Autocomplete'
 
@@ -33,6 +29,10 @@ import { PaginationConfig } from 'antd/lib/pagination'
 import { SorterResult } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
+
+import { TableActions } from 'components/TableActions/TableActions'
+import { Button } from 'components/Button/Button'
+import styled from '@emotion/styled'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -58,20 +58,14 @@ interface Data {
 const initData = {
   morion: 0,
   current: 0,
-  code: '',
+  code: 0,
   partner: 0,
 }
 
 export const Prices = () => {
   const [state, setState] = useState(initData)
   const [data, setData] = useState([])
-  const [order, setOrder] = React.useState('asc')
-  const [orderBy, setOrderBy] = React.useState('')
-  const [selected, setSelected] = React.useState([])
-  const [rowSelected, setRowSelected] = useState({})
-  const [page, setPage] = React.useState(0)
-  const [dense, setDense] = React.useState(false)
-  const [rowsPerPage, setRowsPerPage] = React.useState(5)
+
   const [partners, setPartners] = useState([])
   const [open, setOpen] = useState(false)
   const [openCreateModal, setOpenCreateModal] = useState(false)
@@ -96,6 +90,9 @@ export const Prices = () => {
 
   const handleChange = e => {
     const { name, value } = e.target
+    if (name === 'partner') {
+      return setState(prev => ({ ...prev, [name]: value }))
+    }
     setState(prev => ({ ...prev, [name]: value }))
   }
 
@@ -157,8 +154,8 @@ export const Prices = () => {
   useEffect(() => {
     const fetchPartners = async () => {
       try {
-        const res = await getPartners()
-        setPartners(res)
+        const { data } = await getPartners()
+        setPartners(data)
       } catch (error) {
         console.log(error)
       }
@@ -201,6 +198,30 @@ export const Prices = () => {
     getCheckboxProps: (record: object) => ({
       name: record.dataIndex,
     }),
+  }
+
+  const handleClickEdit = record => {
+    setState({ ...record, partner: record?.partner?.id })
+    setOpenCreateModal(true)
+  }
+
+  const tableActionProps = record => ({
+    todos: ['delete', 'edit'],
+    callbacks: [() => handleDeletePrice(record.id), () => handleClickEdit(record)],
+    preloaders: [],
+    disabled: [false, false],
+    tooltips: ['Remove this price?', 'Edit this price?'],
+    popConfirms: ['Are you sure that you want to delete this price?'],
+  })
+
+  const handleSave = async importData => {
+    try {
+      await uploadPrice(importData)
+      fetchPrice({ page: pagination.page, per_page: pagination.per_page })
+      handleClose()
+    } catch (error) {
+      notification('error', 'Something went wrong!')
+    }
   }
 
   const columns: ColumnProps<any> = useMemo(
@@ -246,12 +267,29 @@ export const Prices = () => {
         sorter: true,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
       },
+      {
+        title: renderTitle('Actions'),
+        dataIndex: 'actions',
+        sorter: false,
+        render: (value, record) => <TableActions {...tableActionProps(record)} />,
+      },
     ],
     [clickedRowIndex],
   )
 
   return (
     <Box sx={{ width: '100%' }}>
+      <ControlsWrapper>
+        <Button
+          onClick={() => {
+            setOpenCreateModal(true)
+          }}
+        >
+          Create New
+        </Button>
+        <Button onClick={handleClickOpen}>Import Price</Button>
+      </ControlsWrapper>
+
       <Table
         columns={columns}
         dataSource={data}
@@ -261,7 +299,7 @@ export const Prices = () => {
         rowSelection={rowSelection}
       />
 
-      <ImportModal handleClose={handleClose} open={open} />
+      <ImportModal onSave={handleSave} handleClose={handleClose} open={open} />
 
       <Dialog
         open={openCreateModal}
@@ -270,15 +308,15 @@ export const Prices = () => {
           setState(initData)
         }}
       >
-        <DialogTitle>Add Price</DialogTitle>
+        <DialogTitle>{!!state?.id ? 'Update Price' : 'Add Price'} </DialogTitle>
         <DialogContent>
           <Autocomplete
             id='asynchronous-demo'
             fullWidth
             getOptionLabel={option => partners.find(o => o.id === option)?.name}
-            options={partners?.map(o => o?.id)}
+            options={partners?.map(o => o?.id) || []}
             onChange={(event, value) => handleChange({ target: { name: 'partner', value } })}
-            value={state.partner?.id || null}
+            value={state.partner || null}
             size='small'
             renderInput={params => (
               <TextField
@@ -342,54 +380,18 @@ export const Prices = () => {
           >
             Cancel
           </Button>
-          <Button onClick={!!state?.id ? handleUpdatePrice : handleCreatePrice}>Add</Button>
+          <Button onClick={!!state?.id ? handleUpdatePrice : handleCreatePrice}>
+            {!!state?.id ? 'Update' : 'Create'}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
   )
 }
-const UploadRow = styled.div`
-  width: 140px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  position: relative;
 
-  & .custom-file-input::-webkit-file-upload-button {
-    visibility: hidden;
-  }
-  & .custom-file-input::before {
-    content: 'Upload';
-    display: inline-block;
-    background: linear-gradient(top, #f9f9f9, #e3e3e3);
-    border: 1px solid #999;
-    border-radius: 3px;
-    padding: 5px 8px;
-    outline: none;
-    white-space: nowrap;
-    -webkit-user-select: none;
-    cursor: pointer;
-    text-shadow: 1px 1px #fff;
-    font-weight: 700;
-    font-size: 10pt;
-  }
-  & .custom-file-input:hover::before {
-    border-color: black;
-  }
-  & .custom-file-input:active::before {
-    background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
-  }
-  & img {
-    width: 100px;
-    height: 100px;
-    display: block;
-    object-fit: contain;
-    object-position: center;
-    border: 1px solid #71b9ea;
-  }
-  & input {
-    margin-left: 15px;
-  }
+const ControlsWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 `

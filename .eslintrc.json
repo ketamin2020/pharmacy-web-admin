@@ -1,0 +1,49 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript",
+    "react-app",
+    "react-app/jest"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "settings": {
+    "import/resolver": {
+      // "typescript": {
+      //   "project": "./tsconfig.json"
+      // }
+      // "node": {
+      //   "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      // }
+    },
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "react/prop-types": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "react/react-in-jsx-scope": "off",
+    "import/no-unresolved": "off",
+    "import/newline-after-import": ["error", { "count": 1 }],
+    "prefer-const": [
+      "error",
+      {
+        "destructuring": "all"
+      }
+    ],
+    "@typescript-eslint/no-unused-vars": ["error"],
+    "@typescript-eslint/no-explicit-any": "off", //temp
+    // "react/no-unescaped-entities": "off", //temp
+    "react/no-unknown-property": "off" //temp
+  }
+}

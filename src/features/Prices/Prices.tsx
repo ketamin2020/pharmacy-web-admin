@@ -4,35 +4,28 @@ import { useState, useEffect, useMemo } from 'react'
 import { priceToView } from 'utils/priceToView'
 import Box from '@mui/material/Box'
 
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-
-import { TextField } from '@mui/material'
-
 import { getPrices, createPrice, updatePrice, deletePrice, uploadPrice } from 'api/price'
-import { getPartners } from 'api/partners'
+import { getPartnersList } from 'api/partners'
 
 import notification from 'common/Notification/Notification'
 import moment from 'moment'
 
 import { ImportModal } from 'components/modals/ImportModal'
-import Autocomplete from '@mui/material/Autocomplete'
-
-import { Tooltip } from 'antd'
 
 import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
 
 import { TableActions } from 'components/TableActions/TableActions'
 import { Button } from 'components/Button/Button'
 import styled from '@emotion/styled'
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
+import { Modal, Input, Select, Tooltip } from 'antd'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -56,10 +49,10 @@ interface Data {
 }
 
 const initData = {
-  morion: 0,
-  current: 0,
-  code: 0,
-  partner: 0,
+  morion: '',
+  current: '',
+  code: '',
+  partner: '',
 }
 
 export const Prices = () => {
@@ -154,7 +147,8 @@ export const Prices = () => {
   useEffect(() => {
     const fetchPartners = async () => {
       try {
-        const { data } = await getPartners()
+        const data = await getPartnersList()
+
         setPartners(data)
       } catch (error) {
         console.log(error)
@@ -230,11 +224,13 @@ export const Prices = () => {
         title: renderTitle('Code'),
         dataIndex: 'code',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Code Morion'),
         dataIndex: 'morion',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
 
       {
@@ -242,30 +238,35 @@ export const Prices = () => {
         dataIndex: 'current',
         sorter: true,
         render: value => priceToView(value),
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Previous Price'),
         dataIndex: 'previous_price',
         sorter: true,
         render: value => priceToView(value),
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Partner'),
         dataIndex: 'partner',
         sorter: true,
         render: value => value?.name || '-',
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Created at'),
         dataIndex: 'created_at',
         sorter: true,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
         dataIndex: 'updated_at',
         sorter: true,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Actions'),
@@ -301,7 +302,7 @@ export const Prices = () => {
 
       <ImportModal onSave={handleSave} handleClose={handleClose} open={open} />
 
-      <Dialog
+      {/* <Dialog
         open={openCreateModal}
         onClose={() => {
           setOpenCreateModal(false)
@@ -384,7 +385,52 @@ export const Prices = () => {
             {!!state?.id ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
+
+      <Modal
+        title={!!state?.id ? 'Update Price' : 'Add Price'}
+        open={openCreateModal}
+        onCancel={() => {
+          setOpenCreateModal(false)
+          setState(initData)
+        }}
+        onOk={!!state?.id ? handleUpdatePrice : handleCreatePrice}
+        okText={!!state?.id ? 'Update' : 'Create'}
+      >
+        <Select
+          placeholder='Partner'
+          style={{ width: '100%', marginBottom: '20px' }}
+          onChange={value => handleChange({ target: { name: 'partner', value } })}
+          options={partners?.map(item => ({ value: item?.id, label: item.name }))}
+        />
+        <Input
+          placeholder='Code'
+          type='number'
+          name='code'
+          onChange={handleChange}
+          value={state.code}
+          disabled={!!state?.id}
+          style={{ marginBottom: '20px' }}
+        />
+        <Input
+          placeholder='Morion'
+          type='number'
+          name='morion'
+          onChange={handleChange}
+          value={state.morion}
+          disabled={!!state?.id}
+          style={{ marginBottom: '20px' }}
+        />
+        <Input
+          autoFocus
+          placeholder='Price'
+          type='number'
+          name='current'
+          onChange={handleChange}
+          value={state.current}
+          style={{ marginBottom: '20px' }}
+        />
+      </Modal>
     </Box>
   )
 }

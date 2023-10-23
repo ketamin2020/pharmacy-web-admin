@@ -9,6 +9,12 @@ export const DeliveryTypeTitle = {
   3: 'DELIVERY',
 }
 
+export const deliveryTypeOptions = [
+  { value: 1, text: 'PICKUP' },
+  { value: 2, text: 'NOVA_POSHTA' },
+  { value: 3, text: 'DELIVERY' },
+]
+
 const PaymentTypeNum = {
   CARD: 1,
   IN_SHOP: 2,
@@ -18,6 +24,11 @@ export const PaymentTypeTitle = {
   1: 'CARD',
   2: 'IN_SHOP',
 }
+
+export const paymentTypeOptions = [
+  { value: 1, text: 'CARD' },
+  { value: 2, text: 'IN_SHOP' },
+]
 
 const StatusTypeNum = {
   ACTIVE: 1,

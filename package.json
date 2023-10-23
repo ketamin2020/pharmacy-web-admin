@@ -2,6 +2,7 @@
   "name": "pharmacy-web",
   "version": "1.1.0",
   "private": true,
+  "proxy": "http://localhost:8080",
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
     "@emotion/react": "^11.10.5",

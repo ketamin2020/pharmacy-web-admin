@@ -10,13 +10,15 @@ import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
 import moment from 'moment'
 
 import notification from 'common/Notification/Notification'
 import { priceToView } from 'utils/priceToView'
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -43,7 +45,7 @@ export const Drugs = () => {
       const { data, meta } = await getDrugsList(params)
       setPagination({
         page: meta.current_page,
-        page_size: meta.page_size,
+        pageSize: meta.page_size,
         total: meta.total_items,
       })
       setData(data)
@@ -99,23 +101,30 @@ export const Drugs = () => {
         title: renderTitle('Name'),
         dataIndex: 'name',
         sorter: true,
-        width: 250,
+        width: 350,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
 
       {
         title: renderTitle('Morion'),
         dataIndex: 'morion',
         sorter: true,
+        width: 100,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('External Code'),
         dataIndex: 'external_code',
         sorter: true,
+        width: 100,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Slug'),
         dataIndex: 'slug',
         sorter: true,
+        width: 350,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Marked Name'),
@@ -123,11 +132,14 @@ export const Drugs = () => {
         sorter: true,
         render: name => name?.name,
         width: 250,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Price'),
         dataIndex: 'price',
         sorter: true,
+        width: 100,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
         render: price => priceToView(price?.current),
       },
       {
@@ -135,13 +147,17 @@ export const Drugs = () => {
         dataIndex: 'images',
         sorter: true,
         width: 250,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
         render: images =>
-          images?.items?.filter(item => !!item?.url).map(item => <Image src={item.url} width={50} height={50} />),
+          images?.items
+            ?.filter(item => !!item?.url)
+            .map(item => <Image key={item.url} src={item.url} width={50} height={50} />),
       },
       {
         title: renderTitle('Reviews'),
         dataIndex: 'reviews',
         sorter: true,
+        width: 100,
         render: reviews => reviews?.length || 0,
       },
 
@@ -149,12 +165,15 @@ export const Drugs = () => {
         title: renderTitle('Created at'),
         dataIndex: 'created_at',
         sorter: true,
+        width: 200,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
         dataIndex: 'updated_at',
         sorter: true,
+        width: 200,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
       },
     ],

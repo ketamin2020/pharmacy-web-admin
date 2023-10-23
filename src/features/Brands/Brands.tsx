@@ -1,15 +1,8 @@
 import * as React from 'react'
 import { useRef, useState, useEffect, useMemo } from 'react'
-import { alpha } from '@mui/material/styles'
+
 import Box from '@mui/material/Box'
 
-import Button from '@mui/material/Button'
-import { styled } from '@mui/material/styles'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import CloseIcon from '@mui/icons-material/Close'
 import { TextField } from '@mui/material'
 import Cropper from 'react-cropper'
 import { createBrand, getBrands, deleteBrand, updateBrand } from 'api/brand'
@@ -17,30 +10,28 @@ import { uploadSingleFile } from 'api/media'
 import notification from 'common/Notification/Notification'
 import moment from 'moment'
 
-import { Tooltip, Image } from 'antd'
-
 import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
+
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
+import { TableActions } from 'components/TableActions/TableActions'
+import { Modal, Input, Upload, Button, Tooltip, Image } from 'antd'
+import { LoadingOutlined, PlusOutlined } from '@ant-design/icons'
+
+import type { UploadChangeParam } from 'antd/es/upload'
+import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
     {name}
   </Tooltip>
 )
-
-const BootstrapDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-}))
 
 const defaultSrc = 'https://raw.githubusercontent.com/roadmanfong/react-cropper/master/example/img/child.jpg'
 
@@ -57,45 +48,33 @@ interface Data {
   created_at: string
   id: string
 }
-function BootstrapDialogTitle(props: DialogTitleProps) {
-  const { children, onClose, ...other } = props
-
-  return (
-    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
-      {children}
-      {onClose ? (
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </DialogTitle>
-  )
-}
 
 const initData = {
   name: '',
   url: '',
 }
+const getBase64 = (img: RcFile, callback: (url: string) => void) => {
+  const reader = new FileReader()
+  reader.addEventListener('load', () => callback(reader.result as string))
+  reader.readAsDataURL(img)
+}
+
+const beforeUpload = (file: RcFile) => {
+  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
+  if (!isJpgOrPng) {
+    message.error('You can only upload JPG/PNG file!')
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    message.error('Image must smaller than 2MB!')
+  }
+  return isJpgOrPng && isLt2M
+}
 
 export const Brands = () => {
   const [state, setState] = useState(initData)
   const [data, setData] = useState([])
-  const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('calories')
-  const [selected, setSelected] = React.useState<readonly string[]>([])
-  const [rowSelected, setRowSelected] = useState({})
-  const [page, setPage] = React.useState(0)
-  const [dense, setDense] = React.useState(false)
-  const [rowsPerPage, setRowsPerPage] = React.useState(5)
+
   const [open, setOpen] = React.useState(false)
   const [openCropModal, setOpenCropModal] = useState(false)
   const [openUpdateModal, setOpenUpdateModal] = useState(false)
@@ -114,22 +93,17 @@ export const Brands = () => {
 
   const [clickedRowIndex, setClickedRowIndex] = useState<number | null>(null)
 
-  const [selectedRowKeys, setSelectedRowKeys] = useState([])
-  const [checkedRows, setCheckedRows] = useState([])
-  const onChange = (e: any) => {
-    e.preventDefault()
-    let files
-    if (e.dataTransfer) {
-      files = e.dataTransfer.files
-    } else if (e.target) {
-      files = e.target.files
-    }
-    const reader = new FileReader()
-    reader.onload = () => {
+  const [loading, setLoading] = useState(false)
+
+  const handleChange: UploadProps['onChange'] = (info: UploadChangeParam<UploadFile>) => {
+    setLoading(true)
+
+    getBase64(info.file.originFileObj as RcFile, url => {
       setOpenCropModal(true)
-      setImage(reader.result as any)
-    }
-    reader.readAsDataURL(files[0])
+      setImage(url)
+      setLoading(false)
+      setCropData(null)
+    })
   }
 
   const getCropData = () => {
@@ -150,10 +124,6 @@ export const Brands = () => {
   const onChangeHandle = (e: onChange<HTMLInputElement>) => {
     const { name, value } = e.target
     setState(prev => ({ ...prev, [name]: value }))
-  }
-  const onChangeUpdateHandle = (e: onChange<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setRowSelected(prev => ({ ...prev, [name]: value }))
   }
 
   const handleClickOpen = () => {
@@ -204,10 +174,9 @@ export const Brands = () => {
     }
   }
 
-  const handleDeleteBrand = async () => {
+  const handleDeleteBrand = async id => {
     try {
-      console.log(rowSelected)
-      await deleteBrand(rowSelected.id)
+      await deleteBrand(id)
       await fetchBrands({ page: pagination.page, per_page: pagination.per_page })
       notification('success', 'Brand deleted successfuly!')
     } catch (error) {
@@ -239,22 +208,14 @@ export const Brands = () => {
     },
   })
 
-  const rowSelection = {
-    selectedRowKeys,
-    columnWidth: 30,
-    onChange: (
-      selectedRowKeys: React.SetStateAction<never[]>,
-      selectedRows: {
-        map: (arg0: (row: any) => any) => React.SetStateAction<never[]>
-      },
-    ) => {
-      setCheckedRows(selectedRows.map(row => ({ ...row, display_info: row.name })))
-      setSelectedRowKeys(selectedRowKeys)
-    },
-    getCheckboxProps: (record: object) => ({
-      name: record.dataIndex,
-    }),
-  }
+  const tableActionProps = record => ({
+    todos: ['delete', 'edit'],
+    callbacks: [() => handleDeleteBrand(record.id), () => null],
+    preloaders: [],
+    disabled: [false, false],
+    tooltips: ['Remove this user?', 'Edit this user?'],
+    popConfirms: ['Are you sure that you want to delete this user?'],
+  })
 
   const columns: ColumnProps<any> = useMemo(
     () => [
@@ -262,21 +223,29 @@ export const Brands = () => {
         title: renderTitle('ID'),
         dataIndex: 'id',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Name'),
         dataIndex: 'name',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('URL'),
         dataIndex: 'url',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Slug'),
         dataIndex: 'slug',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Logo'),
@@ -289,144 +258,147 @@ export const Brands = () => {
         title: renderTitle('Created at'),
         dataIndex: 'created_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
         dataIndex: 'updated_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
+      },
+      {
+        title: renderTitle('Actions'),
+        dataIndex: 'actions',
+        sorter: false,
+        width: 200,
+        render: (value, record) => <TableActions {...tableActionProps(record)} />,
       },
     ],
     [clickedRowIndex],
   )
 
+  const uploadButton = (
+    <div>
+      {loading ? <LoadingOutlined /> : <PlusOutlined />}
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </div>
+  )
+
   return (
     <Box sx={{ width: '100%' }}>
-      <Table
-        columns={columns}
-        dataSource={data}
-        pagination={pagination}
-        onChange={handleTableChange}
-        onRow={onRow}
-        rowSelection={rowSelection}
-      />
+      <div style={{ marginBottom: '10px' }}>
+        <Button onClick={handleClickOpen}>Create Brand</Button>
+      </div>
+      <Table columns={columns} dataSource={data} pagination={pagination} onChange={handleTableChange} onRow={onRow} />
 
-      <BootstrapDialog onClose={handleClose} aria-labelledby='customized-dialog-title' open={open}>
-        <BootstrapDialogTitle id='customized-dialog-title' onClose={handleClose}>
-          Create new brand
-        </BootstrapDialogTitle>
-        <DialogContent dividers>
-          <TextField
-            onChange={onChangeHandle}
-            name='name'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Name'
-          />
+      <Modal
+        onOk={() => {
+          handleCreateBrand()
+          handleClose()
+        }}
+        title='Create New Brand'
+        open={open}
+        onCancel={handleClose}
+      >
+        <Input
+          onChange={onChangeHandle}
+          name='name'
+          style={{ marginBottom: '20px' }}
+          value={state.name}
+          placeholder='Name'
+        />
 
-          <TextField
-            onChange={onChangeHandle}
-            name='url'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='https://example.com'
-            label='Public URL'
-          />
-          <TextField onChange={onChange} style={{ marginBottom: '20px' }} fullWidth type='file' />
-          {cropData && <img style={{ width: '30%' }} src={cropData} alt='cropped' />}
-        </DialogContent>
+        <Input
+          onChange={onChangeHandle}
+          name='url'
+          style={{ marginBottom: '20px' }}
+          value={state.url}
+          placeholder='Public URL'
+        />
+        <Upload
+          name='avatar'
+          listType='picture-card'
+          className='avatar-uploader'
+          showUploadList={false}
+          beforeUpload={beforeUpload}
+          onChange={handleChange}
+        >
+          {cropData ? <img src={cropData} alt='avatar' style={{ width: '100%' }} /> : uploadButton}
+        </Upload>
+      </Modal>
 
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              handleCreateBrand()
-              handleClose()
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
-      <BootstrapDialog onClose={handleCloseCropModal} aria-labelledby='customized-dialog-title' open={openCropModal}>
-        <DialogContent dividers>
-          <Cropper
-            style={{ height: 400, width: '100%' }}
-            initialAspectRatio={1}
-            preview='.img-preview'
-            src={image}
-            ref={imageRef}
-            viewMode={1}
-            guides={true}
-            minCropBoxHeight={10}
-            minCropBoxWidth={10}
-            background={false}
-            responsive={true}
-            checkOrientation={false}
-            onInitialized={instance => {
-              setCropper(instance)
-            }}
-          />
-        </DialogContent>
+      <Modal
+        onOk={() => {
+          getCropData()
+          setOpenCropModal(false)
+        }}
+        title='Edit Image'
+        onCancel={handleCloseCropModal}
+        open={openCropModal}
+      >
+        <Cropper
+          style={{ height: 400, width: '100%' }}
+          initialAspectRatio={1}
+          preview='.img-preview'
+          src={image}
+          ref={imageRef}
+          viewMode={1}
+          guides={true}
+          minCropBoxHeight={10}
+          minCropBoxWidth={10}
+          background={false}
+          responsive={true}
+          checkOrientation={false}
+          onInitialized={instance => {
+            setCropper(instance)
+          }}
+        />
+      </Modal>
 
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              getCropData()
-              setOpenCropModal(false)
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
-      <BootstrapDialog
-        onClose={handleCloseUpdateModal}
-        aria-labelledby='customized-dialog-title'
+      <Modal
+        onOk={() => {
+          handleCreateBrand()
+          handleClose()
+        }}
+        title='Update Brand'
+        onCancel={handleCloseUpdateModal}
         open={openUpdateModal}
       >
-        <BootstrapDialogTitle id='customized-dialog-title' onClose={handleCloseUpdateModal}>
-          Update Brand
-        </BootstrapDialogTitle>
-        <DialogContent dividers>
-          <TextField
-            onChange={onChangeUpdateHandle}
-            name='name'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Name'
-            value={rowSelected.name}
-          />
+        <Input
+          onChange={onChangeHandle}
+          name='name'
+          style={{ marginBottom: '20px' }}
+          placeholder='Name'
+          label='Name'
+          value={state.name}
+        />
 
-          <TextField
-            onChange={onChangeUpdateHandle}
-            name='url'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='https://example.com'
-            label='Public URL'
-            value={rowSelected.url}
-          />
-          <TextField onChange={onChange} style={{ marginBottom: '20px' }} fullWidth type='file' />
-          {rowSelected.image && <img style={{ width: '30%' }} src={rowSelected.image} alt='cropped' />}
-        </DialogContent>
+        <TextField
+          onChange={onChangeHandle}
+          name='url'
+          style={{ marginBottom: '20px' }}
+          placeholder='Public URL'
+          label='Public URL'
+          value={state.url}
+        />
 
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              handleCreateBrand()
-              handleClose()
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
+        <Upload
+          name='avatar'
+          listType='picture-card'
+          className='avatar-uploader'
+          showUploadList={false}
+          beforeUpload={beforeUpload}
+          onChange={handleChange}
+        >
+          {cropData ? <img src={cropData} alt='avatar' style={{ width: '100%' }} /> : uploadButton}
+        </Upload>
+      </Modal>
     </Box>
   )
 }

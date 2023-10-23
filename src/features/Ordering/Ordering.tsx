@@ -10,15 +10,23 @@ import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
 import moment from 'moment'
 
 import notification from 'common/Notification/Notification'
 
-import { DeliveryTypeTitle, PaymentTypeTitle, StatusTypeTitle } from './constants'
+import {
+  DeliveryTypeTitle,
+  PaymentTypeTitle,
+  StatusTypeTitle,
+  deliveryTypeOptions,
+  paymentTypeOptions,
+} from './constants'
 import { priceToView } from 'utils/priceToView'
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -103,6 +111,7 @@ export const Ordering = () => {
         sorter: true,
         render: client => client?.first_name || '-',
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Client Last Name'),
@@ -110,6 +119,7 @@ export const Ordering = () => {
         sorter: true,
         render: client => client?.last_name || '-',
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Client Middle Name'),
@@ -117,6 +127,7 @@ export const Ordering = () => {
         sorter: true,
         render: client => client?.middle_name || '-',
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Client Phone'),
@@ -124,26 +135,30 @@ export const Ordering = () => {
         sorter: true,
         render: client => client?.phone || '-',
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Comment'),
         dataIndex: 'comment',
         sorter: true,
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Delivery Type'),
         dataIndex: 'delivery_type',
         sorter: true,
         render: value => DeliveryTypeTitle[value],
+        filters: deliveryTypeOptions,
         width: 200,
       },
       {
-        title: renderTitle('Discounnt'),
+        title: renderTitle('Discount'),
         dataIndex: 'discount',
         sorter: true,
         render: discount => priceToView(discount?.usedBonus),
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Status'),
@@ -165,6 +180,7 @@ export const Ordering = () => {
         sorter: true,
         render: total => priceToView(total),
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
 
       {
@@ -173,11 +189,13 @@ export const Ordering = () => {
         sorter: true,
         render: payment => priceToView(payment.price.totalToPay),
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Pay Type'),
         dataIndex: 'payment',
         sorter: true,
+        filters: paymentTypeOptions,
         render: payment => PaymentTypeTitle?.[payment.type],
         width: 200,
       },
@@ -195,6 +213,7 @@ export const Ordering = () => {
         sorter: true,
         render: warehouse => warehouse?.city?.name,
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
       {
         title: renderTitle('Delivery Recepient'),
@@ -202,6 +221,7 @@ export const Ordering = () => {
         sorter: true,
         render: warehouse => `${warehouse?.recipient?.first_name} ${warehouse?.recipient?.last_name}`,
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
       },
 
       {
@@ -210,6 +230,7 @@ export const Ordering = () => {
         sorter: true,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
@@ -217,6 +238,7 @@ export const Ordering = () => {
         sorter: true,
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
         width: 200,
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
     ],
     [clickedRowIndex],

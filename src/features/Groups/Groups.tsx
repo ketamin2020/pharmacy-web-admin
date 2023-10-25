@@ -1,33 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { TextField } from '@mui/material'
-import { Edit } from '@material-ui/icons'
-import Button from '@mui/material/Button'
-import { styled as s } from '@mui/material/styles'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import IconButton from '@mui/material/IconButton'
-import CloseIcon from '@mui/icons-material/Close'
-import Accordion from '@mui/material/Accordion'
-import AccordionDetails from '@mui/material/AccordionDetails'
-import AccordionSummary from '@mui/material/AccordionSummary'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import Typography from '@mui/material/Typography'
-import { Delete } from '@material-ui/icons'
+
 import { getGroups, deleteGroup, updateGroup, createGroup } from 'api/groups'
-import { Add } from '@material-ui/icons'
-import styled from '@emotion/styled'
+
 import { uploadSingleFile } from 'api/media'
 import Cropper from 'react-cropper'
-const BootstrapDialog = s(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-}))
+import { EditOutlined, DeleteOutlined, FileImageOutlined } from '@ant-design/icons'
+import { Collapse, Modal, Input, Button, Popover } from 'antd'
+
+const { Panel } = Collapse
 export interface DialogTitleProps {
   id: string
   children?: React.ReactNode
@@ -45,24 +25,13 @@ export const Groups = () => {
 
   const [state, setState] = useState(initState)
   const [groups, setGroups] = useState([])
-  const [expanded, setExpanded] = useState<string | false>(false)
-  const [expandedFirst, setExpandedFirst] = useState<string | false>(false)
-  const [expandedSecond, setExpandedSecond] = useState<string | false>(false)
+
   const [openCropModal, setOpenCropModal] = useState(false)
   const [image, setImage] = useState(defaultSrc)
   const [imageBlob, setImageBlob] = useState(null)
   const imageRef = useRef<HTMLImageElement>(null)
   const [cropData, setCropData] = useState(null)
   const [cropper, setCropper] = useState<Cropper>()
-  const handleChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpanded(isExpanded ? panel : false)
-  }
-  const handleChangeFirstLevel = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedFirst(isExpanded ? panel : false)
-  }
-  const handleChangeSecondLevel = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpandedSecond(isExpanded ? panel : false)
-  }
 
   const onChangeFile = (e: any) => {
     e.preventDefault()
@@ -121,12 +90,12 @@ export const Groups = () => {
     }
   }
   const onCreateGroup = async () => {
-    let image = null
+    let image = state.group_image
     try {
       if (imageBlob) {
         image = await uploadSingleFile(imageBlob)
       }
-      await createGroup({ ...state, group_image: image.url })
+      await createGroup({ ...state, group_image: image?.url || image })
       await fetchGroupList()
       setImageBlob(null)
       setCropData(null)
@@ -136,13 +105,13 @@ export const Groups = () => {
   }
 
   const onUpdateGroup = async () => {
-    let image = null
+    let image = state.group_image
 
     try {
       if (imageBlob) {
         image = await uploadSingleFile(imageBlob)
       }
-      await updateGroup({ ...state, group_image: image.url })
+      await updateGroup({ ...state, group_image: image?.url || image })
       await fetchGroupList()
       setImageBlob(null)
       setCropData(null)
@@ -166,7 +135,7 @@ export const Groups = () => {
   return (
     <div>
       <Button
-        variant='outlined'
+        style={{ marginBottom: '10px' }}
         onClick={() => {
           setState(prev => ({ ...prev, level: 0 }))
           handleClickOpen()
@@ -174,39 +143,49 @@ export const Groups = () => {
       >
         Add group
       </Button>
-      {groups?.map((group, i) => (
-        <Accordion key={group.id} expanded={expanded === group.id} onChange={handleChange(group.id)}>
-          <AccordionSummary
-            style={{ alignItems: 'center' }}
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls='panel1bh-content'
-            id='panel1bh-header'
+
+      <Collapse accordion>
+        {groups?.map((group, i) => (
+          <Panel
+            header={
+              <>
+                <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
+                  <p style={{ margin: '0' }}>{group.group_name}</p>
+
+                  <div>
+                    {group?.group_image && (
+                      <Button type='default' style={{ marginRight: '10px' }}>
+                        <Popover
+                          title='Group Image'
+                          content={<img style={{ margin: '0 auto' }} width={100} src={group.group_image} alt='' />}
+                        >
+                          <FileImageOutlined />
+                        </Popover>
+                      </Button>
+                    )}
+
+                    <Button
+                      type='default'
+                      style={{ marginRight: '10px' }}
+                      onClick={() => {
+                        setState({ ...group, level: 0 })
+                        handleClickOpen()
+                      }}
+                    >
+                      <EditOutlined />
+                    </Button>
+                    <Button type='default' onClick={() => onDeleteGroup(group.id, 0, group.id)}>
+                      <DeleteOutlined />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            }
+            key={group.id}
           >
-            <Typography sx={{ width: '90%', flexShrink: 0 }}>
-              <NameWrapper>
-                <p>{group.group_name}</p>
-                <p>{group?.group_image && <img width={50} src={group?.group_image} alt='' />}</p>
-              </NameWrapper>
-            </Typography>
-
-            <Typography></Typography>
-
-            <Typography
-              onClick={() => {
-                setState({ ...group, level: 0 })
-                handleClickOpen()
-              }}
-              sx={{ color: 'text.secondary' }}
-            >
-              <Edit />
-            </Typography>
-            <Typography onClick={() => onDeleteGroup(group.id, 0, group.id)} sx={{ color: 'text.secondary' }}>
-              <Delete />
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
             <Button
-              variant='outlined'
+              type='default'
+              style={{ marginBottom: '10px' }}
               onClick={() => {
                 setState(prev => ({ ...prev, level: 1, parent_id: group.id }))
                 handleClickOpen()
@@ -214,179 +193,154 @@ export const Groups = () => {
             >
               Add first level group
             </Button>
-            {group?.children?.map((group, idx) => (
-              <Accordion
-                key={group.id}
-                expanded={expandedFirst === group.id}
-                onChange={handleChangeFirstLevel(group.id)}
-              >
-                <AccordionSummary
-                  style={{ justifyContent: 'space-between', alignItems: 'center !important' }}
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls='panel1bh-content'
-                  id='panel1bh-header'
-                >
-                  <NameWrapper>
-                    <p>{group.group_name}</p>
-                    <p>{group?.group_image && <img width={50} src={group?.group_image} alt='' />}</p>
-                  </NameWrapper>
+            <Collapse accordion>
+              {group.children?.map(firstLevelGroup => (
+                <Panel
+                  header={
+                    <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
+                      <p style={{ margin: '0' }}>{firstLevelGroup.group_name}</p>
 
-                  <Typography
-                    onClick={() => {
-                      setState({ ...group, level: 1 })
-                      handleClickOpen()
-                    }}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    <Edit />
-                  </Typography>
-                  <Typography
-                    onClick={() => onDeleteGroup(group.id, 1, group.parent_id)}
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    <Delete />
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
+                      <div>
+                        {firstLevelGroup.group_image && (
+                          <Button type='default' style={{ marginRight: '10px' }}>
+                            <Popover
+                              title='Group Image'
+                              content={
+                                <img
+                                  style={{ margin: '0 auto' }}
+                                  width={100}
+                                  src={firstLevelGroup.group_image}
+                                  alt=''
+                                />
+                              }
+                            >
+                              <FileImageOutlined />
+                            </Popover>
+                          </Button>
+                        )}
+                        <Button
+                          type='default'
+                          style={{ marginRight: '10px' }}
+                          onClick={() => {
+                            setState({ ...firstLevelGroup, level: 1 })
+                            handleClickOpen()
+                          }}
+                        >
+                          <EditOutlined />
+                        </Button>
+                        <Button type='default' onClick={() => onDeleteGroup(firstLevelGroup.id, 1, group.id)}>
+                          <DeleteOutlined />
+                        </Button>
+                      </div>
+                    </div>
+                  }
+                  key={firstLevelGroup.id}
+                >
                   <Button
-                    variant='outlined'
+                    type='default'
+                    style={{ marginBottom: '10px' }}
                     onClick={() => {
-                      setState(prev => ({ ...prev, level: 2, parent_id: group.parent_id, child_id: group.id }))
+                      setState(prev => ({ ...prev, level: 2, parent_id: group.id, child_id: firstLevelGroup.id }))
                       handleClickOpen()
                     }}
                   >
                     Add second level group
                   </Button>
+                  <Collapse accordion>
+                    {firstLevelGroup.children?.map(secondLevelGroup => (
+                      <Panel
+                        header={
+                          <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
+                            <p style={{ margin: '0' }}>{secondLevelGroup.group_name}</p>
 
-                  {group?.children?.map(group => (
-                    <Accordion
-                      key={group.id}
-                      expanded={expandedSecond === group.id}
-                      onChange={handleChangeSecondLevel(group.id)}
-                    >
-                      <AccordionSummary
-                        style={{ justifyContent: 'space-between', alignItems: 'center !important' }}
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls='panel1bh-content'
-                        id='panel1bh-header'
-                      >
-                        <NameWrapper>
-                          <p>{group.group_name}</p>
-                          <p>{group?.group_image && <img width={50} src={group?.group_image} alt='' />}</p>
-                        </NameWrapper>
+                            <div>
+                              {secondLevelGroup?.group_image && (
+                                <Button type='default' style={{ marginRight: '10px' }}>
+                                  <Popover
+                                    title='Group Image'
+                                    content={
+                                      <img
+                                        style={{ margin: '0 auto' }}
+                                        width={100}
+                                        src={secondLevelGroup.group_image}
+                                        alt=''
+                                      />
+                                    }
+                                  >
+                                    <FileImageOutlined />
+                                  </Popover>
+                                </Button>
+                              )}
+                              <Button
+                                style={{ marginRight: '10px' }}
+                                type='default'
+                                onClick={() => onDeleteGroup(secondLevelGroup.id, 2, group.id)}
+                              >
+                                <DeleteOutlined />
+                              </Button>
+                            </div>
+                          </div>
+                        }
+                        key={secondLevelGroup.id}
+                      ></Panel>
+                    ))}
+                  </Collapse>
+                </Panel>
+              ))}
+            </Collapse>
+          </Panel>
+        ))}
+      </Collapse>
 
-                        <Typography
-                          onClick={() => onDeleteGroup(group.id, 2, group.parent_id)}
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          <Delete />
-                        </Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>{/* <Typography>{group.group_name}</Typography> */}</AccordionDetails>
-                    </Accordion>
-                  ))}
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </AccordionDetails>
-        </Accordion>
-      ))}
+      <Modal
+        title={state?.id ? 'Update Group' : 'Create new Group'}
+        okText='Save'
+        onOk={() => {
+          state?.id ? onUpdateGroup() : onCreateGroup()
 
-      <BootstrapDialog onClose={handleClose} aria-labelledby='customized-dialog-title' open={open}>
-        <BootstrapDialogTitle id='customized-dialog-title' onClose={handleClose}>
-          Create new groupe
-        </BootstrapDialogTitle>
-        <DialogContent style={{ width: '400px' }} dividers>
-          <TextField
-            onChange={onChange}
-            name='group_name'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Group name'
-            required
-            value={state.group_name}
-          />
-          <TextField onChange={onChangeFile} style={{ marginBottom: '20px' }} fullWidth type='file' />
-          {cropData && <img style={{ width: '30%' }} src={cropData} alt='cropped' />}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              state?.id ? onUpdateGroup() : onCreateGroup()
-              handleClose()
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
+          handleClose()
+        }}
+        open={open}
+        onCancel={handleClose}
+      >
+        <Input
+          onChange={onChange}
+          name='group_name'
+          style={{ marginBottom: '20px' }}
+          placeholder='Group Name'
+          value={state.group_name}
+        />
+        <Input onChange={onChangeFile} style={{ marginBottom: '20px' }} type='file' />
+        {cropData && <img style={{ width: '30%' }} src={cropData} alt='cropped' />}
+      </Modal>
 
-      <BootstrapDialog onClose={handleCloseCropModal} aria-labelledby='customized-dialog-title' open={openCropModal}>
-        <DialogContent dividers>
-          <Cropper
-            style={{ height: 400, width: '100%' }}
-            initialAspectRatio={1}
-            preview='.img-preview'
-            src={image}
-            ref={imageRef}
-            viewMode={1}
-            guides={true}
-            minCropBoxHeight={10}
-            minCropBoxWidth={10}
-            background={false}
-            responsive={true}
-            checkOrientation={false}
-            onInitialized={instance => {
-              setCropper(instance)
-            }}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              getCropData()
-              setOpenCropModal(false)
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
+      <Modal
+        onOk={() => {
+          getCropData()
+          setOpenCropModal(false)
+        }}
+        title='Edit'
+        onCancel={handleCloseCropModal}
+        open={openCropModal}
+      >
+        <Cropper
+          style={{ height: 400, width: '100%' }}
+          initialAspectRatio={1}
+          preview='.img-preview'
+          src={image}
+          ref={imageRef}
+          viewMode={1}
+          guides={true}
+          minCropBoxHeight={10}
+          minCropBoxWidth={10}
+          background={false}
+          responsive={true}
+          checkOrientation={false}
+          onInitialized={instance => {
+            setCropper(instance)
+          }}
+        />
+      </Modal>
     </div>
   )
 }
-function BootstrapDialogTitle(props: DialogTitleProps) {
-  const { children, onClose, ...other } = props
-
-  return (
-    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
-      {children}
-      {onClose ? (
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </DialogTitle>
-  )
-}
-const NameWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  & p {
-    margin: 0 !important;
-  }
-`

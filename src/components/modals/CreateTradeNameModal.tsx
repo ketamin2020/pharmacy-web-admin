@@ -1,18 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 
-import { useState } from 'react'
-
-import Button from '@mui/material/Button'
-import { styled as styles } from '@mui/material/styles'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import CloseIcon from '@mui/icons-material/Close'
-import { TextField } from '@mui/material'
 import notification from 'common/Notification/Notification'
-import IconButton from '@mui/material/IconButton'
+
 import { createTradeName } from 'api/tradeName'
+
+import { Modal, Input } from 'antd'
 
 interface IProps {
   handleClose: () => void
@@ -28,6 +20,7 @@ export const CreateTradeNameModal = ({ handleClose, callback, open }: IProps) =>
       await createTradeName({ name: state })
       notification('success', 'Trade name was created successfuly!')
       await callback()
+      setState('')
       handleClose()
     } catch (error) {
       console.log(error)
@@ -35,25 +28,8 @@ export const CreateTradeNameModal = ({ handleClose, callback, open }: IProps) =>
     }
   }
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogContent>Create trade name</DialogContent>
-
-      <DialogContent>
-        <TextField
-          value={state}
-          onChange={e => setState(e.target.value)}
-          autoFocus
-          margin='dense'
-          id='name'
-          label='Trade name'
-          type='text'
-          fullWidth
-          variant='standard'
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleCreate}>Create</Button>
-      </DialogActions>
-    </Dialog>
+    <Modal title='Create Trade Name' okText='Create' open={open} onCancel={handleClose} onOk={handleCreate}>
+      <Input value={state} onChange={e => setState(e.target.value)} autoFocus placeholder='Trade name' type='text' />
+    </Modal>
   )
 }

@@ -1,18 +1,6 @@
 import * as React from 'react'
 import { useRef, useState } from 'react'
 
-import Box from '@mui/material/Box'
-
-import IconButton from '@mui/material/IconButton'
-
-import Button from '@mui/material/Button'
-import { styled as styles } from '@mui/material/styles'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import CloseIcon from '@mui/icons-material/Close'
-import { TextField } from '@mui/material'
 import { uploadSingleFile } from 'api/media'
 
 import Cropper from 'react-cropper'
@@ -20,14 +8,7 @@ import { createMaker } from 'api/makers'
 
 import notification from 'common/Notification/Notification'
 
-const BootstrapDialog = styles(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-}))
+import { Modal, Input } from 'antd'
 
 export interface DialogTitleProps {
   id: string
@@ -35,29 +16,6 @@ export interface DialogTitleProps {
   onClose: () => void
 }
 
-function BootstrapDialogTitle(props: DialogTitleProps) {
-  const { children, onClose, ...other } = props
-
-  return (
-    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
-      {children}
-      {onClose ? (
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </DialogTitle>
-  )
-}
 interface IProps {
   handleClose: () => void
   callback: () => void
@@ -80,7 +38,7 @@ export const CreateMakerModal = ({ handleClose, callback, open }: IProps) => {
   const imageRef = useRef<HTMLImageElement>(null)
   const [imageBlob, setImageBlob] = useState(null)
 
-  const onChangeHandle = (e: onChange<HTMLInputElement>) => {
+  const onChangeHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setState(prev => ({ ...prev, [name]: value }))
   }
@@ -137,98 +95,74 @@ export const CreateMakerModal = ({ handleClose, callback, open }: IProps) => {
   }
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <BootstrapDialog onClose={handleClose} aria-labelledby='customized-dialog-title' open={open}>
-        <BootstrapDialogTitle id='customized-dialog-title' onClose={handleClose}>
-          Create new maker
-        </BootstrapDialogTitle>
-        <DialogContent dividers>
-          <TextField
-            onChange={onChangeHandle}
-            name='full_name'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Full name'
-            required
-            value={state.full_name}
-          />
+    <>
+      {' '}
+      <Modal okText='Create' onOk={handleCreate} title='Create new Maker' onCancel={handleClose} open={open}>
+        <Input
+          onChange={onChangeHandle}
+          name='full_name'
+          style={{ marginBottom: '20px' }}
+          placeholder='Full name'
+          required
+          value={state.full_name}
+        />
 
-          <TextField
-            onChange={onChangeHandle}
-            name='short_name'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Short name'
-            required
-            value={state.short_name}
-          />
+        <Input
+          onChange={onChangeHandle}
+          name='short_name'
+          style={{ marginBottom: '20px' }}
+          placeholder='Short name'
+          required
+          value={state.short_name}
+        />
 
-          <TextField
-            onChange={onChangeHandle}
-            name='country'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Country'
-            required
-            value={state.country}
-          />
+        <Input
+          onChange={onChangeHandle}
+          name='country'
+          style={{ marginBottom: '20px' }}
+          placeholder='Country'
+          required
+          value={state.country}
+        />
 
-          <TextField
-            onChange={onChangeHandle}
-            name='factory'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Factory'
-            value={state.factory}
-            required
-          />
-          <TextField onChange={onChange} style={{ marginBottom: '20px' }} fullWidth type='file' />
-          {cropData && <img style={{ width: '30%' }} src={cropData} alt='cropped' />}
-        </DialogContent>
-
-        <DialogActions>
-          <Button autoFocus onClick={handleCreate}>
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
-      <BootstrapDialog onClose={handleCloseCropModal} aria-labelledby='customized-dialog-title' open={openCropModal}>
-        <DialogContent dividers>
-          <Cropper
-            style={{ height: 400, width: '100%' }}
-            initialAspectRatio={1}
-            preview='.img-preview'
-            src={image}
-            ref={imageRef}
-            viewMode={1}
-            guides={true}
-            minCropBoxHeight={10}
-            minCropBoxWidth={10}
-            background={false}
-            responsive={true}
-            checkOrientation={false}
-            onInitialized={instance => {
-              setCropper(instance)
-            }}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              getCropData()
-              setOpenCropModal(false)
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
-    </Box>
+        <Input
+          onChange={onChangeHandle}
+          name='factory'
+          style={{ marginBottom: '20px' }}
+          placeholder='Factory'
+          value={state.factory}
+          required
+        />
+        <Input onChange={onChange} style={{ marginBottom: '20px' }} type='file' />
+        {cropData && <img style={{ width: '30%' }} src={cropData} alt='cropped' />}
+      </Modal>
+      <Modal
+        title='Edit'
+        onOk={() => {
+          getCropData()
+          setOpenCropModal(false)
+        }}
+        onCancel={handleCloseCropModal}
+        open={openCropModal}
+      >
+        <Cropper
+          style={{ height: 400, width: '100%' }}
+          initialAspectRatio={1}
+          preview='.img-preview'
+          src={image}
+          ref={imageRef}
+          viewMode={1}
+          guides={true}
+          minCropBoxHeight={10}
+          minCropBoxWidth={10}
+          background={false}
+          responsive={true}
+          checkOrientation={false}
+          onInitialized={instance => {
+            setCropper(instance)
+          }}
+        />
+      </Modal>
+    </>
   )
 }

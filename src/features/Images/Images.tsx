@@ -1,17 +1,10 @@
 import * as React from 'react'
 import { useRef, useState, useEffect, useMemo } from 'react'
-import DialogTitle from '@mui/material/DialogTitle'
-import Box from '@mui/material/Box'
-import CloseIcon from '@mui/icons-material/Close'
-import DeleteIcon from '@mui/icons-material/Delete'
-import IconButton from '@mui/material/IconButton'
-import { styled as Style } from '@mui/material/styles'
-import Dialog from '@mui/material/Dialog'
-import Button from '@mui/material/Button'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
 
-import { TextField } from '@mui/material'
+import Box from '@mui/material/Box'
+
+import DeleteIcon from '@mui/icons-material/Delete'
+
 import Cropper from 'react-cropper'
 
 import { createImages, getImages, deleteImages, updateImages } from 'api/images'
@@ -21,54 +14,24 @@ import moment from 'moment'
 import styled from '@emotion/styled'
 import defaultImg from './defaut.png'
 
-import { Tooltip, Image } from 'antd'
-
 import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
+
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
+import { TableActions } from 'components/TableActions/TableActions'
+import { Modal, Input, Button, Tooltip, Image } from 'antd'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
     {name}
   </Tooltip>
 )
-
-const BootstrapDialog = Style(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-}))
-
-function BootstrapDialogTitle(props: DialogTitleProps) {
-  const { children, onClose, ...other } = props
-
-  return (
-    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
-      {children}
-      {onClose ? (
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </DialogTitle>
-  )
-}
 
 const UploadRow = styled.div`
   width: 140px;
@@ -131,16 +94,12 @@ const initData = {
 export const Images = () => {
   const [state, setState] = useState(initData)
   const [data, setData] = useState([])
-  const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('')
+
   const [selected, setSelected] = React.useState<readonly string[]>([])
-  const [rowSelected, setRowSelected] = useState({})
-  const [page, setPage] = React.useState(0)
-  const [dense, setDense] = React.useState(false)
-  const [rowsPerPage, setRowsPerPage] = React.useState(5)
+
   const [open, setOpen] = React.useState(false)
   const [openCropModal, setOpenCropModal] = useState(false)
-  const [openUpdateModal, setOpenUpdateModal] = useState(false)
+
   const [index, setIndex] = useState(null)
   const [image, setImage] = useState(defaultSrc)
   const [cropData, setCropData] = useState(null)
@@ -155,8 +114,6 @@ export const Images = () => {
 
   const [clickedRowIndex, setClickedRowIndex] = useState<number | null>(null)
 
-  const [selectedRowKeys, setSelectedRowKeys] = useState([])
-  const [checkedRows, setCheckedRows] = useState([])
   const onChange = (e: any, index) => {
     e.preventDefault()
     let files
@@ -196,7 +153,7 @@ export const Images = () => {
     }
   }
 
-  const onChangeHandle = (e: onChange<HTMLInputElement>) => {
+  const onChangeHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setState(prev => ({ ...prev, [name]: value }))
   }
@@ -291,22 +248,20 @@ export const Images = () => {
     },
   })
 
-  const rowSelection = {
-    selectedRowKeys,
-    columnWidth: 30,
-    onChange: (
-      selectedRowKeys: React.SetStateAction<never[]>,
-      selectedRows: {
-        map: (arg0: (row: any) => any) => React.SetStateAction<never[]>
+  const tableActionProps = record => ({
+    todos: ['delete', 'edit'],
+    callbacks: [
+      () => null,
+      () => {
+        setState(record)
+        setOpen(true)
       },
-    ) => {
-      setCheckedRows(selectedRows.map(row => ({ ...row, display_info: row.name })))
-      setSelectedRowKeys(selectedRowKeys)
-    },
-    getCheckboxProps: (record: object) => ({
-      name: record.dataIndex,
-    }),
-  }
+    ],
+    preloaders: [],
+    disabled: [false, false],
+    tooltips: ['Remove this partner?', 'Edit this images?'],
+    popConfirms: ['Are you sure that you want to delete this images?'],
+  })
 
   const columns: ColumnProps<any> = useMemo(
     () => [
@@ -314,33 +269,53 @@ export const Images = () => {
         title: renderTitle('ID'),
         dataIndex: 'id',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
 
       {
         title: renderTitle('Morion'),
         dataIndex: 'morion',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
 
       {
         title: renderTitle('Images'),
         dataIndex: 'items',
         sorter: true,
+        width: 300,
         render: items =>
-          items.filter(item => !!item?.url)?.map(item => <Image src={item.url} width={50} height={50} />),
+          items
+            .filter(item => !!item?.url)
+            ?.map(item => <Image key={item.url} src={item.url} width={50} height={50} />),
       },
 
       {
         title: renderTitle('Created at'),
         dataIndex: 'created_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
         dataIndex: 'updated_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
+      },
+      {
+        title: renderTitle('Actions'),
+        dataIndex: 'actions',
+        sorter: false,
+        width: 200,
+        render: (value, record) => <TableActions {...tableActionProps(record)} />,
       },
     ],
     [clickedRowIndex],
@@ -348,96 +323,77 @@ export const Images = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Table
-        columns={columns}
-        dataSource={data}
-        pagination={pagination}
-        onChange={handleTableChange}
-        onRow={onRow}
-        rowSelection={rowSelection}
-      />
-      <BootstrapDialog onClose={handleClose} aria-labelledby='customized-dialog-title' open={open}>
-        <BootstrapDialogTitle id='customized-dialog-title' onClose={handleClose}>
-          {!!state?.id ? 'Update images' : 'Create new images'}
-        </BootstrapDialogTitle>
-        <DialogContent dividers>
-          {!state?.id && (
-            <TextField
-              onChange={onChangeHandle}
-              name='morion'
-              style={{ marginBottom: '20px' }}
-              fullWidth
-              placeholder='Type...'
-              type='number'
-              label='Morion'
-              value={state.morion}
-              required
-            />
-          )}
-
-          <div style={{ width: '600px', display: 'flex', justifyContent: 'center' }}>
-            {state?.items?.map((item, i) => (
-              <UploadRow key={i}>
-                <img src={item.url || defaultImg} alt='cropped' />
-                <input onChange={e => onChange(e, i)} className='custom-file-input' type='file' />
-                {!!item?.id && (
-                  <span
-                    style={{ cursor: 'pointer', position: 'absolute', top: '0px', right: '40px' }}
-                    onClick={() => handleDeleteImage(state.id, item.id)}
-                  >
-                    <DeleteIcon />
-                  </span>
-                )}
-              </UploadRow>
-            ))}
-          </div>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              !!state?.id ? handleUpdateImages() : handleCreateImages()
-              handleClose()
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
-      <BootstrapDialog onClose={handleCloseCropModal} aria-labelledby='customized-dialog-title' open={openCropModal}>
-        <DialogContent dividers>
-          <Cropper
-            style={{ height: 400, width: '100%' }}
-            initialAspectRatio={1}
-            preview='.img-preview'
-            src={image}
-            ref={imageRef}
-            viewMode={1}
-            guides={true}
-            minCropBoxHeight={10}
-            minCropBoxWidth={10}
-            background={false}
-            responsive={true}
-            checkOrientation={false}
-            onInitialized={instance => {
-              setCropper(instance)
-            }}
+      <Button onClick={handleClickOpen} style={{ marginBottom: '10px' }}>
+        Create new Images
+      </Button>
+      <Table columns={columns} dataSource={data} pagination={pagination} onChange={handleTableChange} onRow={onRow} />
+      <Modal
+        onOk={() => {
+          !!state?.id ? handleUpdateImages() : handleCreateImages()
+          handleClose()
+        }}
+        title={!!state?.id ? 'Update images' : 'Create new images'}
+        onCancel={handleClose}
+        open={open}
+        width={600}
+      >
+        {!state?.id && (
+          <Input
+            onChange={onChangeHandle}
+            name='morion'
+            style={{ marginBottom: '20px' }}
+            placeholder='Morion.'
+            type='number'
+            value={state.morion}
+            required
           />
-        </DialogContent>
+        )}
 
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              getCropData()
-              setOpenCropModal(false)
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
+        <div style={{ width: '600px', display: 'flex', justifyContent: 'center' }}>
+          {state?.items?.map((item, i) => (
+            <UploadRow key={i}>
+              <img src={item.url || defaultImg} alt='cropped' />
+              <input onChange={e => onChange(e, i)} className='custom-file-input' type='file' />
+              {!!item?.id && (
+                <span
+                  style={{ cursor: 'pointer', position: 'absolute', top: '0px', right: '40px' }}
+                  onClick={() => handleDeleteImage(state.id, item.id)}
+                >
+                  <DeleteIcon />
+                </span>
+              )}
+            </UploadRow>
+          ))}
+        </div>
+      </Modal>
+
+      <Modal
+        title='Edit'
+        onOk={() => {
+          getCropData()
+          setOpenCropModal(false)
+        }}
+        onCancel={handleCloseCropModal}
+        open={openCropModal}
+      >
+        <Cropper
+          style={{ height: 400, width: '100%' }}
+          initialAspectRatio={1}
+          preview='.img-preview'
+          src={image}
+          ref={imageRef}
+          viewMode={1}
+          guides={true}
+          minCropBoxHeight={10}
+          minCropBoxWidth={10}
+          background={false}
+          responsive={true}
+          checkOrientation={false}
+          onInitialized={instance => {
+            setCropper(instance)
+          }}
+        />
+      </Modal>
     </Box>
   )
 }

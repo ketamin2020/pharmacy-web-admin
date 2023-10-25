@@ -210,7 +210,13 @@ export const Brands = () => {
 
   const tableActionProps = record => ({
     todos: ['delete', 'edit'],
-    callbacks: [() => handleDeleteBrand(record.id), () => null],
+    callbacks: [
+      () => handleDeleteBrand(record.id),
+      () => {
+        setOpenUpdateModal(true)
+        setState(record)
+      },
+    ],
     preloaders: [],
     disabled: [false, false],
     tooltips: ['Remove this user?', 'Edit this user?'],
@@ -224,7 +230,7 @@ export const Brands = () => {
         dataIndex: 'id',
         sorter: true,
         filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
-        width: 200,
+        width: 300,
       },
       {
         title: renderTitle('Name'),
@@ -233,13 +239,7 @@ export const Brands = () => {
         filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
         width: 200,
       },
-      {
-        title: renderTitle('URL'),
-        dataIndex: 'url',
-        sorter: true,
-        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
-        width: 200,
-      },
+
       {
         title: renderTitle('Slug'),
         dataIndex: 'slug',
@@ -251,6 +251,7 @@ export const Brands = () => {
         title: renderTitle('Logo'),
         dataIndex: 'logo',
         sorter: true,
+        width: 200,
         render: logo => (logo?.url ? <Image src={logo?.url} width={50} height={50} alt='' /> : '-'),
       },
 
@@ -379,12 +380,11 @@ export const Brands = () => {
           value={state.name}
         />
 
-        <TextField
+        <Input
           onChange={onChangeHandle}
           name='url'
           style={{ marginBottom: '20px' }}
           placeholder='Public URL'
-          label='Public URL'
           value={state.url}
         />
 
@@ -396,7 +396,7 @@ export const Brands = () => {
           beforeUpload={beforeUpload}
           onChange={handleChange}
         >
-          {cropData ? <img src={cropData} alt='avatar' style={{ width: '100%' }} /> : uploadButton}
+          {state?.logo?.url ? <img src={state?.logo?.url} alt='avatar' style={{ width: '100%' }} /> : uploadButton}
         </Upload>
       </Modal>
     </Box>

@@ -1,15 +1,10 @@
 import React, { useState } from 'react'
-import Button from '@mui/material/Button'
 
-import Dialog from '@mui/material/Dialog'
-import DialogActions from '@mui/material/DialogActions'
-import DialogContent from '@mui/material/DialogContent'
-import DialogContentText from '@mui/material/DialogContentText'
-import DialogTitle from '@mui/material/DialogTitle'
 import { read, utils } from 'xlsx'
 
-import { Upload, UploadProps } from 'antd'
+import { Upload, UploadProps, Modal } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
+
 const { Dragger } = Upload
 
 const initState = {
@@ -83,27 +78,20 @@ export const ImportModal = ({ handleClose, open, onSave }) => {
   }
 
   return (
-    <div>
-      <Dialog open={open} onClose={handleClearData}>
-        <DialogTitle>Upload table from Spread Sheet</DialogTitle>
-        <DialogContent>
-          <DialogContentText>Are you sure you want to load new data? Existing data will be updated</DialogContentText>
-          <Dragger {...props}>
-            <p className='ant-upload-drag-icon'>
-              <InboxOutlined />
-            </p>
-            <p className='ant-upload-text'>Click or drag file to this area to upload</p>
-            <p className='ant-upload-hint'> Support for a single upload.</p>
-          </Dragger>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleClearData}>Cancel</Button>
-          <Button disabled={!tempFile} onClick={handleSave}>
-            Upload
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+    <Modal
+      onOk={handleSave}
+      okText='Upload'
+      title='Upload table from Spread Sheet'
+      onCancel={handleClearData}
+      open={open}
+    >
+      <Dragger {...props}>
+        <p className='ant-upload-drag-icon'>
+          <InboxOutlined />
+        </p>
+        <p className='ant-upload-text'>Click or drag file to this area to upload</p>
+        <p className='ant-upload-hint'> Support for a single upload.</p>
+      </Dragger>
+    </Modal>
   )
 }

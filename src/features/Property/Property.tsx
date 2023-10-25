@@ -1,30 +1,9 @@
 import * as React from 'react'
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 import Box from '@mui/material/Box'
 
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-
-import IconButton from '@mui/material/IconButton'
-
 import { Add } from '@mui/icons-material'
-import Button from '@mui/material/Button'
-import Dialog from '@mui/material/Dialog'
-
-import CloseIcon from '@mui/icons-material/Close'
-import { TextField } from '@mui/material'
-import { FormControl } from '@material-ui/core'
-
-import MenuItem from '@mui/material/MenuItem'
-
-import Select from '@mui/material/Select'
-
-import List from '@mui/material/List'
-import AppBar from '@mui/material/AppBar'
-
-import { TransitionProps } from '@mui/material/transitions'
-import Slide from '@mui/material/Slide'
 
 import { getProperties, deleteProperty, updateProperty, createProperty } from 'api/property'
 import { getTradeNames, deleteTradeName, updateTradeName, createTradeName } from 'api/tradeName'
@@ -38,8 +17,6 @@ import { getTemperatures } from 'api/temperature'
 import { getPackages } from 'api/package'
 import notification from 'common/Notification/Notification'
 import { getGroups } from 'api/groups'
-import Autocomplete from '@mui/material/Autocomplete'
-import CircularProgress from '@mui/material/CircularProgress'
 
 import styled from '@emotion/styled'
 import { CreateSubstanceModal } from 'components/modals/CreateSubstanceModal'
@@ -52,16 +29,19 @@ import { CreateQuantityModal } from 'components/modals/CreateQuantityModal'
 import { CreateTemperatureModal } from 'components/modals/CreateTemperatureModal'
 import { CreatePackageModal } from 'components/modals/CreatePackageModal'
 
-import { Tooltip, Image } from 'antd'
-
 import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
 import moment from 'moment'
+
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
+import { TableActions } from 'components/TableActions/TableActions'
+import { Modal, Input, Button, Tooltip, Select } from 'antd'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -103,15 +83,6 @@ const childItems = [
   { name: 'З 17 років', value: 'З 17 років' },
   { name: 'З 18 років', value: 'З 18 років' },
 ]
-
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction='up' ref={ref} {...props} />
-})
 
 const initData = {
   active_ingredient: {
@@ -207,12 +178,9 @@ export const Property = () => {
   const [warnings, setWarnings] = useState(initWarnings)
 
   const [data, setData] = useState([])
-  const [order, setOrder] = useState<Order>('asc')
-  const [orderBy, setOrderBy] = useState<keyof Data>()
+
   const [selected, setSelected] = useState<readonly string[]>([])
-  const [page, setPage] = useState(0)
-  const [dense, setDense] = useState(false)
-  const [rowsPerPage, setRowsPerPage] = useState(5)
+
   const [open, setOpen] = useState(false)
   const [rowSelected, setRowSelected] = useState({})
   const [code, setCode] = useState()
@@ -246,22 +214,17 @@ export const Property = () => {
 
   const [clickedRowIndex, setClickedRowIndex] = useState<number | null>(null)
 
-  const [selectedRowKeys, setSelectedRowKeys] = useState([])
-  const [checkedRows, setCheckedRows] = useState([])
-
-  const loading = open && options.length === 0
-
-  const onChangeHandle = (e: onChange<HTMLInputElement>) => {
+  const onChangeHandle = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
 
     setState(prev => ({ ...prev, [name]: { ...prev[name], value: value } }))
   }
 
-  const onChangeWarnings = (e: onChange<HTMLInputElement>) => {
+  const onChangeWarnings = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setWarnings(prev => ({ ...prev, [name]: { ...prev[name], value: value } }))
   }
-  const onChangeGroups = (e: onChange<HTMLInputElement>) => {
+  const onChangeGroups = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, slug } = e.target
     setState(prev => ({
       ...prev,
@@ -494,23 +457,26 @@ export const Property = () => {
       setClickedRowIndex(rowIndex)
     },
   })
+  const tableActionProps = record => ({
+    todos: ['delete', 'edit'],
+    callbacks: [
+      () => handleDelete(record.id),
+      () => {
+        setState(record.attributes.main.items)
+        setWarnings(record.attributes.warnings.items)
+        setRowSelected(record)
+        setExternalCode(record.external_code)
+        setCode(record.code)
+        setName(record.name)
 
-  const rowSelection = {
-    selectedRowKeys,
-    columnWidth: 30,
-    onChange: (
-      selectedRowKeys: React.SetStateAction<never[]>,
-      selectedRows: {
-        map: (arg0: (row: any) => any) => React.SetStateAction<never[]>
+        setOpen(true)
       },
-    ) => {
-      setCheckedRows(selectedRows.map(row => ({ ...row, display_info: row.name })))
-      setSelectedRowKeys(selectedRowKeys)
-    },
-    getCheckboxProps: (record: object) => ({
-      name: record.dataIndex,
-    }),
-  }
+    ],
+    preloaders: [],
+    disabled: [false, false],
+    tooltips: ['Remove this property?', 'Edit this property?'],
+    popConfirms: ['Are you sure that you want to delete this property?'],
+  })
 
   const columns: ColumnProps<any> = useMemo(
     () => [
@@ -518,45 +484,70 @@ export const Property = () => {
         title: renderTitle('Name'),
         dataIndex: 'name',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 400,
       },
 
       {
         title: renderTitle('External Code'),
         dataIndex: 'external_code',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Morion'),
         dataIndex: 'morion',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Slug'),
         dataIndex: 'slug',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Sold'),
         dataIndex: 'sold',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Views'),
         dataIndex: 'views',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
 
       {
         title: renderTitle('Created at'),
         dataIndex: 'created_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
         dataIndex: 'updated_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
+      },
+      {
+        title: renderTitle('Actions'),
+        dataIndex: 'actions',
+        sorter: false,
+        width: 200,
+        render: (value, record) => <TableActions {...tableActionProps(record)} />,
       },
     ],
     [clickedRowIndex],
@@ -569,739 +560,379 @@ export const Property = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Table
-        columns={columns}
-        dataSource={data}
-        pagination={pagination}
-        onChange={handleTableChange}
-        onRow={onRow}
-        rowSelection={rowSelection}
-      />
+      <Button style={{ marginBottom: '10px' }} onClick={handleClickOpen}>
+        {' '}
+        Add new Property{' '}
+      </Button>
+      <Table columns={columns} dataSource={data} pagination={pagination} onChange={handleTableChange} onRow={onRow} />
 
-      <Dialog fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
-        <AppBar sx={{ position: 'relative' }}>
-          <Toolbar>
-            <IconButton edge='start' color='inherit' onClick={handleClose} aria-label='close'>
-              <CloseIcon />
-            </IconButton>
-            <Typography sx={{ ml: 2, flex: 1 }} variant='h6' component='div'>
-              Create New Property
-            </Typography>
+      <Modal
+        onOk={
+          rowSelected?.id
+            ? () => {
+                handleUpdate()
+                handleClose()
+              }
+            : () => {
+                handleCreate()
+                handleClose()
+              }
+        }
+        open={open}
+        okText={rowSelected?.id ? 'Update' : 'Create'}
+        onCancel={handleClose}
+        title='Property'
+        width={800}
+      >
+        <Wrapper>
+          <Row>
+            <p>Код Моріон</p>
+            <Input placeholder='Morion' required type='number' onChange={e => setCode(e.target.value)} value={code} />
+          </Row>
+          <Row>
+            <p>Зовнішній код</p>
+            <Input
+              placeholder='External code'
+              type='text'
+              onChange={e => setExternalCode(e.target.value)}
+              value={externalCode}
+            />
+          </Row>
 
-            {rowSelected?.id ? (
-              <Button
-                autoFocus
-                color='inherit'
-                onClick={() => {
-                  handleUpdate()
-                  handleClose()
-                }}
-              >
-                update
-              </Button>
-            ) : (
-              <Button
-                autoFocus
-                color='inherit'
-                onClick={() => {
-                  handleCreate()
-                  handleClose()
-                }}
-              >
-                save
-              </Button>
-            )}
-          </Toolbar>
-        </AppBar>
-        <List>
-          <Wrapper>
-            <Row>
-              <p>Код Моріон</p>
-              <TextField
-                fullWidth
-                label='Morion'
-                required
-                size='small'
-                type='number'
-                onChange={e => setCode(e.target.value)}
-                value={code}
-              />
-            </Row>
-            <Row>
-              <p>Зовнішній код</p>
-              <TextField
-                fullWidth
-                label='External code'
-                size='small'
-                type='text'
-                onChange={e => setExternalCode(e.target.value)}
-                value={externalCode}
-              />
-            </Row>
+          <Row>
+            <p>Назва</p>
+            <Input placeholder='Name' required type='text' onChange={e => setName(e.target.value)} value={name} />
+          </Row>
 
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>Основна група</p>
+            <Select
+              onChange={value =>
+                onChangeGroups({
+                  target: {
+                    name: 'main_group',
+                    value,
+                    slug: groups.find(f => f.id === value)?.slug,
+                  },
+                })
+              }
+              placeholder='Main Group'
+              value={state?.groups?.main_group?.value || null}
+              options={groups.map(item => ({ value: item.id, label: item.group_name }))}
+            />
+          </Row>
+          {!!state?.groups?.main_group?.value && (
             <Row>
-              <p>Назва</p>
-              <TextField
-                fullWidth
-                label='Name'
-                size='small'
-                required
-                type='text'
-                onChange={e => setName(e.target.value)}
-                value={name}
-              />
-            </Row>
-
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>Основна група</p>
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => groups.find(o => o.id === option)?.group_name}
-                options={groups?.map(o => o?.id)}
-                onChange={(event, value) =>
+              <p style={{ display: 'flex', gap: '10px' }}>1-ша підгрупа</p>
+              <Select
+                onChange={value =>
                   onChangeGroups({
                     target: {
-                      name: 'main_group',
+                      name: 'first_lavel_group',
                       value,
-                      slug: groups.find(f => f.id === value)?.slug,
+                      slug: firstLavelGroup.find(f => f.id === value)?.slug,
                     },
                   })
                 }
-                value={state?.groups?.main_group?.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Main group'
-                    size='small'
-                    fullWidth
-                    name='active_ingredient'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
+                value={state?.groups?.first_lavel_group?.value || null}
+                placeholder='First Group'
+                options={firstLavelGroup?.map(item => ({ value: item.id, label: item.group_name }))}
               />
             </Row>
-            {!!state?.groups?.main_group?.value && (
-              <Row>
-                <p style={{ display: 'flex', gap: '10px' }}>1-ша підгрупа</p>
-                <Autocomplete
-                  id='asynchronous-demo'
-                  fullWidth
-                  getOptionLabel={option => firstLavelGroup?.find(o => o.id === option)?.group_name}
-                  options={firstLavelGroup?.map(o => o?.id)}
-                  onChange={(event, value) =>
-                    onChangeGroups({
-                      target: {
-                        name: 'first_lavel_group',
-                        value,
-                        slug: firstLavelGroup.find(f => f.id === value)?.slug,
-                      },
-                    })
-                  }
-                  value={state?.groups?.first_lavel_group?.value || null}
-                  size='small'
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label='First level'
-                      size='small'
-                      fullWidth
-                      name='first_lavel_group'
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <React.Fragment>
-                            {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </React.Fragment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-              </Row>
-            )}
-            {!!state?.groups?.first_lavel_group?.value && (
-              <Row>
-                <p style={{ display: 'flex', gap: '10px' }}>2-ша підгрупа</p>
-                <Autocomplete
-                  id='asynchronous-demo'
-                  fullWidth
-                  getOptionLabel={option => secondLavelGroup?.find(o => o.id === option)?.group_name}
-                  options={secondLavelGroup?.map(o => o?.id)}
-                  onChange={(event, value) =>
-                    onChangeGroups({
-                      target: {
-                        name: 'second_lavel_group',
-                        value,
-                        slug: secondLavelGroup.find(f => f.id === value)?.slug,
-                      },
-                    })
-                  }
-                  value={state?.groups?.second_lavel_group?.value || null}
-                  size='small'
-                  renderInput={params => (
-                    <TextField
-                      {...params}
-                      label='Second level'
-                      size='small'
-                      fullWidth
-                      name='second_lavel_group'
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <React.Fragment>
-                            {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </React.Fragment>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-              </Row>
-            )}
-
+          )}
+          {!!state?.groups?.first_lavel_group?.value && (
             <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Діюча речовина{' '}
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenSubstaceModal(true)}>
-                  <Add />
-                </span>
-              </p>
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => options.find(o => o.id === option)?.name_ua}
-                options={options?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'active_ingredient', value: value } })}
-                value={state.active_ingredient.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Substance'
-                    size='small'
-                    fullWidth
-                    name='active_ingredient'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Торгівельна назва{' '}
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenTradeNameModal(true)}>
-                  <Add />
-                </span>
-              </p>
-
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => tradeNames.find(o => o.id === option)?.name}
-                options={tradeNames?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'marked_name', value: value } })}
-                value={state.marked_name.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Trade name'
-                    size='small'
-                    fullWidth
-                    name='active_ingredient'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-
-            <Row>
-              <p>Країна виробник</p>
-              <TextField
-                fullWidth
-                label='Manufacturing country'
-                required
-                size='small'
-                name='manufacturing_country'
-                onChange={onChangeHandle}
-                value={state.manufacturing_country.value}
-              />
-            </Row>
-
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Виробник
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenMakerModal(true)}>
-                  <Add />
-                </span>
-              </p>
-
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => makers?.find(o => o.id === option)?.full_name}
-                options={makers?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'maker', value: value } })}
-                value={state.maker.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Makers'
-                    size='small'
-                    fullWidth
-                    name='maker'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-
-            <Row>
-              <p>Імпорт</p>
+              <p style={{ display: 'flex', gap: '10px' }}>2-ша підгрупа</p>
 
               <Select
-                labelId='demo-simple-select-label'
-                id='demo-simple-select'
-                value={state.imported.value}
-                name='imported'
-                onChange={onChangeHandle}
-                size='small'
-              >
-                <MenuItem value={'Так'}>Так</MenuItem>
-                <MenuItem value={'Ні'}>Ні</MenuItem>
-              </Select>
-            </Row>
-
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Дозування
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenDosageModal(true)}>
-                  <Add />
-                </span>
-              </p>
-
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => dosage?.find(o => o.id === option)?.name}
-                options={dosage?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'dosage', value: value } })}
-                value={state.dosage.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Dosage'
-                    size='small'
-                    fullWidth
-                    name='dosage'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
+                onChange={value =>
+                  onChangeGroups({
+                    target: {
+                      name: 'second_lavel_group',
+                      value,
+                      slug: secondLavelGroup.find(f => f.id === value)?.slug,
+                    },
+                  })
+                }
+                value={state?.groups?.second_lavel_group?.value || null}
+                placeholder='Second Group'
+                options={secondLavelGroup?.map(item => ({ value: item.id, label: item.group_name }))}
               />
             </Row>
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Форма
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenFormModal(true)}>
-                  <Add />
-                </span>
-              </p>
+          )}
 
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => forms?.find(o => o.id === option)?.name}
-                options={forms?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'production_form', value: value } })}
-                value={state.production_form.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Form'
-                    size='small'
-                    fullWidth
-                    name='production_form'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-            <Row>
-              <p>Без рецепта</p>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Діюча речовина{' '}
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenSubstaceModal(true)}>
+                <Add />
+              </span>
+            </p>
+            <Select
+              placeholder='Substance'
+              options={options?.map(item => ({ value: item.id, label: item.name_ua }))}
+              value={state.active_ingredient.value || null}
+              onChange={value => onChangeHandle({ target: { name: 'active_ingredient', value: value } })}
+            />
+          </Row>
 
-              <Select
-                labelId='demo-simple-select-label'
-                id='demo-simple-select'
-                value={state.prescription.value}
-                name='prescription'
-                onChange={onChangeHandle}
-                size='small'
-              >
-                <MenuItem value={'Так'}>Так</MenuItem>
-                <MenuItem value={'Ні'}>Ні</MenuItem>
-              </Select>
-            </Row>
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Спосіб введення
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenRouteModal(true)}>
-                  <Add />
-                </span>
-              </p>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Торгівельна назва{' '}
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenTradeNameModal(true)}>
+                <Add />
+              </span>
+            </p>
 
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => route?.find(o => o.id === option)?.name}
-                options={route?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'administration_route', value: value } })}
-                value={state.administration_route.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Administration route'
-                    size='small'
-                    fullWidth
-                    name='administration_route'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Кількість в упаковці
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenQuantityModal(true)}>
-                  <Add />
-                </span>
-              </p>
+            <Select
+              options={tradeNames?.map(item => ({ value: item.id, label: item.name }))}
+              placeholder='Trade Name'
+              onChange={value => onChangeHandle({ target: { name: 'marked_name', value } })}
+              value={state.marked_name.value || null}
+            />
+          </Row>
 
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => quantity?.find(o => o.id === option)?.name}
-                options={quantity?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'quantity', value: value } })}
-                value={state.quantity.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Quantity'
-                    size='small'
-                    fullWidth
-                    name='quantity'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-            <Row>
-              <p>Термін придатності</p>
+          <Row>
+            <p>Країна виробник</p>
+            <Input
+              placeholder='Manufacturing country'
+              required
+              name='manufacturing_country'
+              onChange={onChangeHandle}
+              value={state.manufacturing_country.value}
+            />
+          </Row>
 
-              <Select
-                labelId='demo-simple-select-label'
-                id='demo-simple-select'
-                value={state.expiration.value}
-                onChange={onChangeHandle}
-                name='expiration'
-                size='small'
-              >
-                <MenuItem value={'1 рік'}>1 рік</MenuItem>
-                <MenuItem value={'2 роки'}>2 роки</MenuItem>
-                <MenuItem value={'3 роки'}>3 роки</MenuItem>
-                <MenuItem value={'4 роки'}>4 роки</MenuItem>
-                <MenuItem value={'5 років'}>1 років</MenuItem>
-                <MenuItem value={'6 років'}>6 років</MenuItem>
-              </Select>
-            </Row>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Виробник
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenMakerModal(true)}>
+                <Add />
+              </span>
+            </p>
 
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Температура зберігання
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenTemperatureModal(true)}>
-                  <Add />
-                </span>
-              </p>
+            <Select
+              onChange={value => onChangeHandle({ target: { name: 'maker', value } })}
+              value={state.maker.value || null}
+              placeholder='Makers'
+              options={makers?.map(item => ({ value: item.id, label: item.full_name }))}
+            />
+          </Row>
 
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => temperature?.find(o => o.id === option)?.name}
-                options={temperature?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'storage_temperature', value: value } })}
-                value={state.storage_temperature.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Temperature'
-                    size='small'
-                    fullWidth
-                    name='storage_temperature'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
-            <Row>
-              <p style={{ display: 'flex', gap: '10px' }}>
-                Упаковка
-                <span style={{ cursor: 'pointer' }} onClick={() => setOpenPackageModal(true)}>
-                  <Add />
-                </span>
-              </p>
+          <Row>
+            <p>Імпорт</p>
 
-              <Autocomplete
-                id='asynchronous-demo'
-                fullWidth
-                getOptionLabel={option => packages?.find(o => o.id === option)?.name}
-                options={packages?.map(o => o?.id)}
-                onChange={(event, value) => onChangeHandle({ target: { name: 'package', value: value } })}
-                value={state.package.value || null}
-                size='small'
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label='Package'
-                    size='small'
-                    fullWidth
-                    name='package'
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <React.Fragment>
-                          {loading ? <CircularProgress color='inherit' size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </React.Fragment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Row>
+            <Select value={state.imported.value} name='imported' onChange={onChangeHandle}>
+              <Select.Option value={'Так'}>Так</Select.Option>
+              <Select.Option value={'Ні'}>Ні</Select.Option>
+            </Select>
+          </Row>
 
-            <p>Кому можна</p>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Дозування
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenDosageModal(true)}>
+                <Add />
+              </span>
+            </p>
 
-            <Row>
-              <p>Алергікам</p>
+            <Select
+              placeholder='Dosage'
+              options={dosage?.map(item => ({ value: item.id, label: item.name }))}
+              onChange={value => onChangeHandle({ target: { name: 'dosage', value } })}
+              value={state.dosage.value || null}
+            />
+          </Row>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Форма
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenFormModal(true)}>
+                <Add />
+              </span>
+            </p>
 
-              <Select
-                labelId='demo-simple-select-label'
-                id='demo-simple-select'
-                value={warnings.allergy_warning.value}
-                onChange={onChangeWarnings}
-                name='allergy_warning'
-                size='small'
-              >
-                {warningsItems.map((el, idx) => (
-                  <MenuItem key={idx} value={el.value}>
-                    {el.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Row>
+            <Select
+              placeholder='Form'
+              options={forms?.map(item => ({ value: item.id, label: item.name }))}
+              onChange={value => onChangeHandle({ target: { name: 'production_form', value } })}
+              value={state.production_form.value || null}
+            />
+          </Row>
+          <Row>
+            <p>Без рецепта</p>
 
-            <Row>
-              <p>Діабетикам</p>
-              <FormControl fullWidth>
-                <Select
-                  labelId='demo-simple-select-label'
-                  id='demo-simple-select'
-                  value={warnings.diabetes_warning.value}
-                  name='diabetes_warning'
-                  onChange={onChangeWarnings}
-                  size='small'
-                >
-                  {warningsItems.map((el, idx) => (
-                    <MenuItem key={idx} value={el.value}>
-                      {el.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Row>
+            <Select value={state.prescription.value} name='prescription' onChange={onChangeHandle}>
+              <Select.Option value={'Так'}>Так</Select.Option>
+              <Select.Option value={'Ні'}>Ні</Select.Option>
+            </Select>
+          </Row>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Спосіб введення
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenRouteModal(true)}>
+                <Add />
+              </span>
+            </p>
 
-            <Row>
-              <p>Водіям</p>
-              <FormControl fullWidth>
-                <Select
-                  labelId='demo-simple-select-label'
-                  id='demo-simple-select'
-                  value={warnings.driving_warning.value}
-                  onChange={onChangeWarnings}
-                  name='driving_warning'
-                  size='small'
-                >
-                  {warningsItems.map((el, idx) => (
-                    <MenuItem key={idx} value={el.value}>
-                      {el.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Row>
+            <Select
+              placeholder='Administration Route'
+              options={route?.map(item => ({ value: item.id, label: item.name }))}
+              onChange={value => onChangeHandle({ target: { name: 'administration_route', value } })}
+              value={state.administration_route.value || null}
+            />
+          </Row>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Кількість в упаковці
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenQuantityModal(true)}>
+                <Add />
+              </span>
+            </p>
 
-            <Row>
-              <p>Вігітним</p>
-              <FormControl fullWidth>
-                <Select
-                  labelId='demo-simple-select-label'
-                  id='demo-simple-select'
-                  value={warnings.pregnancy_warning.value}
-                  onChange={onChangeWarnings}
-                  name='pregnancy_warning'
-                  size='small'
-                >
-                  {warningsItems.map((el, idx) => (
-                    <MenuItem key={idx} value={el.value}>
-                      {el.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Row>
-            <Row>
-              <p>Годуючим матерям</p>
-              <FormControl fullWidth>
-                <Select
-                  labelId='demo-simple-select-label'
-                  id='demo-simple-select'
-                  value={warnings.breastfeeding_warning.value}
-                  onChange={onChangeWarnings}
-                  name='breastfeeding_warning'
-                  size='small'
-                >
-                  {warningsItems.map((el, idx) => (
-                    <MenuItem key={idx} value={el.value}>
-                      {el.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Row>
-            <Row>
-              <p>Взаємодія з алкоголем</p>
-              <FormControl fullWidth>
-                <Select
-                  labelId='demo-simple-select-label'
-                  id='demo-simple-select'
-                  value={warnings.alcohol_warning.value}
-                  onChange={onChangeWarnings}
-                  size='small'
-                  name='alcohol_warning'
-                >
-                  {warningsItems.map((el, idx) => (
-                    <MenuItem key={idx} value={el.value}>
-                      {el.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Row>
-            <Row>
-              <p>Дітям</p>
+            <Select
+              placeholder='Quantity'
+              options={quantity?.map(item => ({ value: item.id, label: item.name }))}
+              onChange={value => onChangeHandle({ target: { name: 'quantity', value } })}
+              value={state.quantity.value || null}
+            />
+          </Row>
+          <Row>
+            <p>Термін придатності</p>
 
-              <Select
-                labelId='demo-simple-select-label'
-                id='demo-simple-select'
-                value={warnings.child_warning.value}
-                placeholder='Expiration'
-                name='child_warning'
-                onChange={onChangeWarnings}
-                size='small'
-              >
-                {childItems.map((el, idx) => (
-                  <MenuItem key={idx} value={el.value}>
-                    {el.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Row>
-          </Wrapper>
-        </List>
-      </Dialog>
+            <Select value={state.expiration.value} onChange={onChangeHandle} name='expiration'>
+              <Select.Option value={'1 рік'}>1 рік</Select.Option>
+              <Select.Option value={'2 роки'}>2 роки</Select.Option>
+              <Select.Option value={'3 роки'}>3 роки</Select.Option>
+              <Select.Option value={'4 роки'}>4 роки</Select.Option>
+              <Select.Option value={'5 років'}>1 років</Select.Option>
+              <Select.Option value={'6 років'}>6 років</Select.Option>
+            </Select>
+          </Row>
+
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Температура зберігання
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenTemperatureModal(true)}>
+                <Add />
+              </span>
+            </p>
+
+            <Select
+              placeholder='Temperature'
+              options={temperature?.map(item => ({ value: item.id, label: item.name }))}
+              onChange={value => onChangeHandle({ target: { name: 'storage_temperature', value } })}
+              value={state.storage_temperature.value || null}
+            />
+          </Row>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>
+              Упаковка
+              <span style={{ cursor: 'pointer' }} onClick={() => setOpenPackageModal(true)}>
+                <Add />
+              </span>
+            </p>
+
+            <Select
+              placeholder='Package'
+              options={packages?.map(item => ({ value: item.id, label: item.name }))}
+              onChange={value => onChangeHandle({ target: { name: 'package', value } })}
+              value={state.package.value || null}
+            />
+          </Row>
+
+          <p>Кому можна</p>
+
+          <Row>
+            <p>Алергікам</p>
+
+            <Select value={warnings.allergy_warning.value} onChange={onChangeWarnings} name='allergy_warning'>
+              {warningsItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+
+          <Row>
+            <p>Діабетикам</p>
+
+            <Select value={warnings.diabetes_warning.value} name='diabetes_warning' onChange={onChangeWarnings}>
+              {warningsItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+
+          <Row>
+            <p>Водіям</p>
+
+            <Select value={warnings.driving_warning.value} onChange={onChangeWarnings} name='driving_warning'>
+              {warningsItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+
+          <Row>
+            <p>Вігітним</p>
+
+            <Select value={warnings.pregnancy_warning.value} onChange={onChangeWarnings} name='pregnancy_warning'>
+              {warningsItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+          <Row>
+            <p>Годуючим матерям</p>
+
+            <Select
+              value={warnings.breastfeeding_warning.value}
+              onChange={onChangeWarnings}
+              name='breastfeeding_warning'
+            >
+              {warningsItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+          <Row>
+            <p>Взаємодія з алкоголем</p>
+
+            <Select value={warnings.alcohol_warning.value} onChange={onChangeWarnings} name='alcohol_warning'>
+              {warningsItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+          <Row>
+            <p>Дітям</p>
+
+            <Select
+              value={warnings.child_warning.value}
+              placeholder='Expiration'
+              name='child_warning'
+              onChange={onChangeWarnings}
+            >
+              {childItems.map((el, idx) => (
+                <Select.Option key={idx} value={el.value}>
+                  {el.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Row>
+        </Wrapper>
+      </Modal>
 
       <CreateSubstanceModal
         callback={fetchSubstanceList}
@@ -1342,7 +973,7 @@ export const Property = () => {
 }
 
 const Wrapper = styled.div`
-  padding: 20px 100px;
+  padding: 20px;
 `
 
 const Row = styled.div`

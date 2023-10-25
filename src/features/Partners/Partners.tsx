@@ -1,34 +1,28 @@
 import * as React from 'react'
-import { useRef, useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 import Box from '@mui/material/Box'
 
-import IconButton from '@mui/material/IconButton'
-
-import Button from '@mui/material/Button'
-import { styled as styles } from '@mui/material/styles'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import CloseIcon from '@mui/icons-material/Close'
-import { TextField } from '@mui/material'
 import InputMask from 'react-input-mask'
 import styled from '@emotion/styled'
-import { TimePicker } from '@mui/x-date-pickers/TimePicker'
+
 import { getPartners, deletePartner, updatePartner, createPartner } from 'api/partners'
 import moment from 'moment'
 import notification from 'common/Notification/Notification'
-
-import { Tooltip, Image } from 'antd'
 
 import { Table } from 'components/Table/Table'
 
 import { PaginationConfig } from 'antd/lib/pagination'
 
-import { SorterResult } from 'antd/lib/table/interface'
+import { SorterResult, FilterDropdownProps } from 'antd/lib/table/interface'
 
 import { ColumnProps } from 'antd/lib/table'
+
+import { SearchFilter } from 'components/Table/components/SearchFilter'
+import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
+import { TableActions } from 'components/TableActions/TableActions'
+import { Modal, Input, Button, Tooltip } from 'antd'
+import TimePicker from 'components/TimePicker/TimePicker'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -41,15 +35,8 @@ const PickerWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
 `
-const BootstrapDialog = styles(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
-    padding: theme.spacing(2),
-  },
-  '& .MuiDialogActions-root': {
-    padding: theme.spacing(1),
-  },
-}))
 
 export interface DialogTitleProps {
   id: string
@@ -69,29 +56,6 @@ interface Data {
     end_time: string
   }
 }
-function BootstrapDialogTitle(props: DialogTitleProps) {
-  const { children, onClose, ...other } = props
-
-  return (
-    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
-      {children}
-      {onClose ? (
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </DialogTitle>
-  )
-}
 
 const initData = {
   name: '',
@@ -101,22 +65,17 @@ const initData = {
   ordering_email: '',
   ordering_phone: '',
   business_hours: {
-    start_time: '',
-    end_time: '',
+    start_time: moment(),
+    end_time: moment(),
   },
 }
 
 export const Partners = () => {
   const [state, setState] = useState(initData)
   const [data, setData] = useState([])
-  const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('calories')
-  const [selected, setSelected] = React.useState<readonly string[]>([])
-  const [page, setPage] = React.useState(0)
-  const [dense, setDense] = React.useState(false)
-  const [rowsPerPage, setRowsPerPage] = React.useState(5)
+
   const [open, setOpen] = React.useState(false)
-  const [rowSelected, setRowSelected] = useState({})
+
   const [pagination, setPagination] = useState({
     page: 1,
     per_page: 25,
@@ -124,9 +83,6 @@ export const Partners = () => {
   })
 
   const [clickedRowIndex, setClickedRowIndex] = useState<number | null>(null)
-
-  const [selectedRowKeys, setSelectedRowKeys] = useState([])
-  const [checkedRows, setCheckedRows] = useState([])
 
   const onChangeHandleTimePicker = obj => {
     const { name, value } = obj
@@ -180,9 +136,9 @@ export const Partners = () => {
       notification('error', 'Something went wrong!')
     }
   }
-  const handleDelete = async () => {
+  const handleDelete = async id => {
     try {
-      await deletePartner(rowSelected.id)
+      await deletePartner(id)
       await fetchPartnersList({ page: pagination.page, per_page: pagination.per_page })
       notification('success', 'Partner was deleted successfuly!')
     } catch (error) {
@@ -213,22 +169,14 @@ export const Partners = () => {
     },
   })
 
-  const rowSelection = {
-    selectedRowKeys,
-    columnWidth: 30,
-    onChange: (
-      selectedRowKeys: React.SetStateAction<never[]>,
-      selectedRows: {
-        map: (arg0: (row: any) => any) => React.SetStateAction<never[]>
-      },
-    ) => {
-      setCheckedRows(selectedRows.map(row => ({ ...row, display_info: row.name })))
-      setSelectedRowKeys(selectedRowKeys)
-    },
-    getCheckboxProps: (record: object) => ({
-      name: record.dataIndex,
-    }),
-  }
+  const tableActionProps = record => ({
+    todos: ['delete'],
+    callbacks: [() => handleDelete(record.id), () => null],
+    preloaders: [],
+    disabled: [false, false],
+    tooltips: ['Remove this partner?', 'Edit this partner?'],
+    popConfirms: ['Are you sure that you want to delete this partner?'],
+  })
 
   const columns: ColumnProps<any> = useMemo(
     () => [
@@ -236,50 +184,77 @@ export const Partners = () => {
         title: renderTitle('Name'),
         dataIndex: 'name',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
 
       {
         title: renderTitle('Full Address'),
         dataIndex: 'full_address',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Slug'),
         dataIndex: 'slug',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Common Email'),
         dataIndex: 'common_email',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Ordering Email'),
         dataIndex: 'ordering_email',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Common Phone'),
         dataIndex: 'common_phone',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
       {
         title: renderTitle('Ordering Phone'),
         dataIndex: 'ordering_phone',
         sorter: true,
+        filterDropdown: (props: FilterDropdownProps) => <SearchFilter title={'Search'} {...props} />,
+        width: 200,
       },
 
       {
         title: renderTitle('Created at'),
         dataIndex: 'created_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
       },
       {
         title: renderTitle('Updated at'),
         dataIndex: 'updated_at',
         sorter: true,
+        width: 200,
+
         render: value => moment(value).format('DD/MM/YYYY HH:mm'),
+        filterDropdown: (props: FilterDropdownProps) => <DateRangeFilter {...props} />,
+      },
+      {
+        title: renderTitle('Actions'),
+        dataIndex: 'actions',
+        sorter: false,
+        width: 200,
+        render: (value, record) => <TableActions {...tableActionProps(record)} />,
       },
     ],
     [clickedRowIndex],
@@ -287,137 +262,103 @@ export const Partners = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
+      <Button style={{ marginBottom: '10px' }} onClick={handleClickOpen}>
+        Add new Partner
+      </Button>
       <Table
+        size='small'
         columns={columns}
         dataSource={data}
         pagination={pagination}
         onChange={handleTableChange}
         onRow={onRow}
-        rowSelection={rowSelection}
       />
-      <BootstrapDialog onClose={handleClose} aria-labelledby='customized-dialog-title' open={open}>
-        <BootstrapDialogTitle id='customized-dialog-title' onClose={handleClose}>
-          Create new partner
-        </BootstrapDialogTitle>
-        <DialogContent dividers>
-          <TextField
-            onChange={onChangeHandle}
-            name='name'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Name'
-            required
-            value={state.name}
+
+      <Modal
+        title='Create New Partner'
+        okText='Create'
+        open={open}
+        onOk={() => {
+          handleCreate()
+          handleClose()
+        }}
+        onCancel={handleClose}
+      >
+        <Input
+          onChange={onChangeHandle}
+          name='name'
+          style={{ marginBottom: '20px' }}
+          placeholder='Name'
+          required
+          value={state.name}
+        />
+
+        <Input
+          onChange={onChangeHandle}
+          name='full_address'
+          style={{ marginBottom: '20px' }}
+          placeholder='Address'
+          required
+          value={state.full_address}
+        />
+        <InputMask
+          name='common_phone'
+          mask={'+38(999)-99-99-999'}
+          maskChar='X'
+          value={state?.common_phone}
+          onChange={onChangeHandle}
+        >
+          {inputProps => <Input style={{ marginBottom: '20px' }} placeholder='Common phone' {...inputProps} />}
+        </InputMask>
+
+        <Input
+          onChange={onChangeHandle}
+          name='common_email'
+          style={{ marginBottom: '20px' }}
+          placeholder='Common email'
+          required
+          value={state.common_email}
+        />
+
+        <InputMask
+          name='ordering_phone'
+          mask={'+38(999)-99-99-999'}
+          maskChar='X'
+          value={state.ordering_phone}
+          onChange={onChangeHandle}
+        >
+          {inputProps => <Input style={{ marginBottom: '20px' }} placeholder='Ordering phone' {...inputProps} />}
+        </InputMask>
+        <Input
+          onChange={onChangeHandle}
+          name='ordering_email'
+          style={{ marginBottom: '20px' }}
+          placeholder='Ordering email'
+          value={state.ordering_email}
+          required
+        />
+        <p>Business hours:</p>
+
+        <PickerWrapper>
+          <TimePicker
+            placeholder='Start'
+            name='start_time'
+            format='HH:mm'
+            value={state.business_hours.start_time}
+            onChange={value => onChangeHandleTimePicker({ name: 'start_time', value })}
+            style={{ width: '100%' }}
           />
 
-          <TextField
-            onChange={onChangeHandle}
-            name='full_address'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Address'
-            required
-            value={state.full_address}
+          <TimePicker
+            placeholder='End'
+            name='end_time'
+            format='HH:mm'
+            onChange={value => onChangeHandleTimePicker({ name: 'end_time', value })}
+            value={state.business_hours.end_time}
+            style={{ width: '100%' }}
           />
-          <InputMask
-            name='common_phone'
-            mask={'+38(999)-99-99-999'}
-            maskChar='X'
-            value={state.phone}
-            onChange={onChangeHandle}
-          >
-            {inputProps => (
-              <TextField
-                variant='outlined'
-                fullWidth
-                style={{ marginBottom: '20px' }}
-                label='Common phone'
-                {...inputProps}
-                type='tel'
-                required
-              />
-            )}
-          </InputMask>
-
-          <TextField
-            onChange={onChangeHandle}
-            name='common_email'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Common email'
-            required
-            value={state.common_email}
-          />
-
-          <InputMask
-            name='ordering_phone'
-            mask={'+38(999)-99-99-999'}
-            maskChar='X'
-            value={state.ordering_phone}
-            onChange={onChangeHandle}
-          >
-            {inputProps => (
-              <TextField
-                variant='outlined'
-                style={{ marginBottom: '20px' }}
-                fullWidth
-                label='Ordering phone'
-                {...inputProps}
-                type='tel'
-                required
-              />
-            )}
-          </InputMask>
-          <TextField
-            onChange={onChangeHandle}
-            name='ordering_email'
-            style={{ marginBottom: '20px' }}
-            fullWidth
-            placeholder='Type...'
-            label='Ordering email'
-            value={state.ordering_email}
-            required
-          />
-          <p>Business hours:</p>
-
-          <PickerWrapper>
-            <TimePicker
-              label='Start'
-              name='start_time'
-              inputFormat='HH:mm'
-              mask='__:__'
-              value={state.business_hours.start_time}
-              onChange={value => onChangeHandleTimePicker({ name: 'start_time', value })}
-              renderInput={params => <TextField label='Start' {...params} />}
-            />
-
-            <TimePicker
-              label='End'
-              name='end_time'
-              inputFormat='HH:mm'
-              mask='__:__'
-              onChange={value => onChangeHandleTimePicker({ name: 'end_time', value })}
-              value={state.business_hours.end_time}
-              renderInput={params => <TextField label='End' {...params} />}
-            />
-          </PickerWrapper>
-        </DialogContent>
-
-        <DialogActions>
-          <Button
-            autoFocus
-            onClick={() => {
-              handleCreate()
-              handleClose()
-            }}
-          >
-            Save changes
-          </Button>
-        </DialogActions>
-      </BootstrapDialog>
+        </PickerWrapper>
+      </Modal>
     </Box>
   )
 }

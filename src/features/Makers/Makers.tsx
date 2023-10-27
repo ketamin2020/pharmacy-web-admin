@@ -231,6 +231,7 @@ export const Makers = () => {
         title: renderTitle('Logo'),
         dataIndex: 'logo',
         sorter: true,
+        width: 200,
         render: logo => (!!logo?.url ? <Image src={logo.url} width={50} height={50} /> : '-'),
       },
 

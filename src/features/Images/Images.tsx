@@ -25,7 +25,7 @@ import { ColumnProps } from 'antd/lib/table'
 import { SearchFilter } from 'components/Table/components/SearchFilter'
 import { DateRangeFilter } from 'components/Table/components/DateRangeFilter'
 import { TableActions } from 'components/TableActions/TableActions'
-import { Modal, Input, Button, Tooltip, Image } from 'antd'
+import { Modal, Input, Button, Tooltip, Image, InputNumber } from 'antd'
 
 const renderTitle = name => (
   <Tooltip placement='topLeft' title={name}>
@@ -338,11 +338,11 @@ export const Images = () => {
         width={600}
       >
         {!state?.id && (
-          <Input
+          <InputNumber
             onChange={onChangeHandle}
             name='morion'
             style={{ marginBottom: '20px' }}
-            placeholder='Morion.'
+            placeholder='Morion'
             type='number'
             value={state.morion}
             required

@@ -338,10 +338,10 @@ export const Images = () => {
         width={600}
       >
         {!state?.id && (
-          <InputNumber
+          <Input
             onChange={onChangeHandle}
             name='morion'
-            style={{ marginBottom: '20px' }}
+            style={{ marginBottom: '20px', width: '100%' }}
             placeholder='Morion'
             type='number'
             value={state.morion}

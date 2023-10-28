@@ -799,7 +799,18 @@ export const Property = () => {
           <Row>
             <p>Термін придатності</p>
 
-            <Select value={state.expiration.value} onChange={onChangeHandle} name='expiration'>
+            <Select
+              value={state.expiration.value}
+              onChange={value =>
+                onChangeHandle({
+                  target: {
+                    name: 'expiration',
+                    value,
+                  },
+                })
+              }
+              name='expiration'
+            >
               <Select.Option value={'1 рік'}>1 рік</Select.Option>
               <Select.Option value={'2 роки'}>2 роки</Select.Option>
               <Select.Option value={'3 роки'}>3 роки</Select.Option>
@@ -845,7 +856,11 @@ export const Property = () => {
           <Row>
             <p>Алергікам</p>
 
-            <Select value={warnings.allergy_warning.value} onChange={onChangeWarnings} name='allergy_warning'>
+            <Select
+              value={warnings.allergy_warning.value}
+              onChange={value => onChangeWarnings({ target: { value, name: 'allergy_warning' } })}
+              name='allergy_warning'
+            >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
                   {el.name}
@@ -857,7 +872,11 @@ export const Property = () => {
           <Row>
             <p>Діабетикам</p>
 
-            <Select value={warnings.diabetes_warning.value} name='diabetes_warning' onChange={onChangeWarnings}>
+            <Select
+              value={warnings.diabetes_warning.value}
+              name='diabetes_warning'
+              onChange={value => onChangeWarnings({ target: { value, name: 'diabetes_warning' } })}
+            >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
                   {el.name}
@@ -869,7 +888,11 @@ export const Property = () => {
           <Row>
             <p>Водіям</p>
 
-            <Select value={warnings.driving_warning.value} onChange={onChangeWarnings} name='driving_warning'>
+            <Select
+              value={warnings.driving_warning.value}
+              onChange={value => onChangeWarnings({ target: { value, name: 'driving_warning' } })}
+              name='driving_warning'
+            >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
                   {el.name}
@@ -881,7 +904,11 @@ export const Property = () => {
           <Row>
             <p>Вігітним</p>
 
-            <Select value={warnings.pregnancy_warning.value} onChange={onChangeWarnings} name='pregnancy_warning'>
+            <Select
+              value={warnings.pregnancy_warning.value}
+              onChange={value => onChangeWarnings({ target: { value, name: 'driving_warning' } })}
+              name='driving_warning'
+            >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
                   {el.name}
@@ -894,7 +921,7 @@ export const Property = () => {
 
             <Select
               value={warnings.breastfeeding_warning.value}
-              onChange={onChangeWarnings}
+              onChange={value => onChangeWarnings({ target: { value, name: 'breastfeeding_warning' } })}
               name='breastfeeding_warning'
             >
               {warningsItems.map((el, idx) => (
@@ -907,7 +934,11 @@ export const Property = () => {
           <Row>
             <p>Взаємодія з алкоголем</p>
 
-            <Select value={warnings.alcohol_warning.value} onChange={onChangeWarnings} name='alcohol_warning'>
+            <Select
+              value={warnings.alcohol_warning.value}
+              onChange={value => onChangeWarnings({ target: { value, name: 'alcohol_warning' } })}
+              name='alcohol_warning'
+            >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
                   {el.name}
@@ -922,7 +953,7 @@ export const Property = () => {
               value={warnings.child_warning.value}
               placeholder='Expiration'
               name='child_warning'
-              onChange={onChangeWarnings}
+              onChange={value => onChangeWarnings({ target: { value, name: 'child_warning' } })}
             >
               {childItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>

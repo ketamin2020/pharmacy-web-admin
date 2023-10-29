@@ -906,8 +906,7 @@ export const Property = () => {
 
             <Select
               value={warnings.pregnancy_warning.value}
-              onChange={value => onChangeWarnings({ target: { value, name: 'driving_warning' } })}
-              name='driving_warning'
+              onChange={value => onChangeWarnings({ target: { value, name: 'pregnancy_warning' } })}
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>

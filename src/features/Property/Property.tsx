@@ -197,6 +197,8 @@ export const Property = () => {
   const [options, setOptions] = useState<readonly Film[]>([])
   const [groups, setGroups] = useState([])
   const [openTradeNameModal, setOpenTradeNameModal] = useState(false)
+  const [percentType, setPercentType] = useState(1)
+  const [propertyType, setPropertyType] = useState(1)
 
   const [openSubstaceModal, setOpenSubstaceModal] = useState(false)
   const [openMakerModal, setOpenMakerModal] = useState(false)
@@ -596,6 +598,35 @@ export const Property = () => {
               type='text'
               onChange={e => setExternalCode(e.target.value)}
               value={externalCode}
+            />
+          </Row>
+
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>Percent Type</p>
+            <Select
+              onChange={setPercentType}
+              placeholder='Percent Type'
+              value={percentType}
+              options={[
+                { label: 'Нац. перелік з регульованою націнкою', value: 1 },
+                { label: 'ЛЗ з нерегульованою націнкою', value: 2 },
+                { label: 'Іншні товари з нерегульованою націнкою', value: 3 },
+                { label: 'РРЦ', value: 4 },
+              ]}
+            />
+          </Row>
+          <Row>
+            <p style={{ display: 'flex', gap: '10px' }}>Property Type</p>
+            <Select
+              onChange={setPropertyType}
+              placeholder='Property Type'
+              value={propertyType}
+              options={[
+                { label: 'ЛЗ', value: 1 },
+                { label: 'БАДи', value: 2 },
+                { label: 'Товари', value: 3 },
+                { label: 'Інше', value: 4 },
+              ]}
             />
           </Row>
 

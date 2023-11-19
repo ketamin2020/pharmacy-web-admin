@@ -45,6 +45,8 @@ const items: MenuItem[] = [
   getItem('Substance', RoutePath.SUBSTANCE, <PieChartOutlined />),
   getItem('Makers', RoutePath.MAKERS, <PieChartOutlined />),
   getItem('Accounting', RoutePath.ACCOUNTING, <PieChartOutlined />),
+  getItem('Reviews', RoutePath.REVIEWS, <PieChartOutlined />),
+  getItem('Blogs', RoutePath.BLOGS, <PieChartOutlined />),
 ]
 
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
@@ -98,6 +100,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             mode='inline'
             items={items}
             onClick={({ key }) => handleMenuItemClick(key)}
+            style={{ maxHeight: '80vh', overflow: 'scroll' }}
           />
         </MenuContainer>
 

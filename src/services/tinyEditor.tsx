@@ -26,6 +26,6 @@ export const tinyEditorSettings = {
     'undo redo | blocks | ' +
     'bold italic forecolor | alignleft aligncenter ' +
     'alignright alignjustify | bullist numlist outdent indent | ' +
-    'removeformat | help',
+    'removeformat | help | paragraph h1 h2 h3 ',
   content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
 }

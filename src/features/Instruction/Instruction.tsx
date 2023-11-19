@@ -342,7 +342,7 @@ export const Instruction = () => {
           value={value.title}
         />
         <Editor
-          apiKey='your-api-key'
+          apiKey={process.env.REACT_APP_TINY_EDITOR_API_KEY}
           onInit={(evt, editor) => (editorRef.current = editor)}
           initialValue={state?.[key]?.html}
           onEditorChange={newValue => onChangeEditorHandle(key, newValue)}

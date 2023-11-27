@@ -5,7 +5,7 @@ import Box from '@mui/material/Box'
 
 import { Add } from '@mui/icons-material'
 
-import { getProperties, deleteProperty, updateProperty, createProperty } from 'api/property'
+import { getProperties, deleteProperty, updateProperty, createProperty, copyProperty } from 'api/property'
 import { getTradeNames, deleteTradeName, updateTradeName, createTradeName } from 'api/tradeName'
 import { getForms } from 'api/form'
 import { getSubstances } from 'api/substances'
@@ -303,13 +303,26 @@ export const Property = () => {
       notification('error', 'Something went wrong!')
     }
   }
-  const handleDelete = async () => {
+
+  const handleDelete = async id => {
     try {
-      await deleteProperty(rowSelected.id)
+      await deleteProperty(id)
       await fetchPropertiesList({ page: pagination.page, per_page: pagination.per_page })
       setSelected([])
       setRowSelected({})
       notification('success', 'Property was deleted successfuly!')
+    } catch (error) {
+      notification('error', 'Something went wrong!')
+    }
+  }
+
+  const handleDuplicate = async id => {
+    try {
+      const res = await copyProperty(id)
+
+      setData(prev => [res, ...prev])
+
+      notification('success', 'Property was duplicated successfuly!')
     } catch (error) {
       notification('error', 'Something went wrong!')
     }
@@ -460,7 +473,7 @@ export const Property = () => {
     },
   })
   const tableActionProps = record => ({
-    todos: ['delete', 'edit'],
+    todos: ['delete', 'edit', 'copy'],
     callbacks: [
       () => handleDelete(record.id),
       () => {
@@ -468,15 +481,16 @@ export const Property = () => {
         setWarnings(record.attributes.warnings.items)
         setRowSelected(record)
         setExternalCode(record.external_code)
-        setCode(record.code)
+        setCode(record.morion)
         setName(record.name)
 
         setOpen(true)
       },
+      () => handleDuplicate(record.id),
     ],
     preloaders: [],
-    disabled: [false, false],
-    tooltips: ['Remove this property?', 'Edit this property?'],
+    disabled: [false, false, false],
+    tooltips: ['Remove this property?', 'Edit this property?', 'Copy this property?'],
     popConfirms: ['Are you sure that you want to delete this property?'],
   })
 
@@ -792,7 +806,11 @@ export const Property = () => {
           <Row>
             <p>Без рецепта</p>
 
-            <Select value={state.prescription.value} name='prescription' onChange={onChangeHandle}>
+            <Select
+              value={state.prescription.value}
+              name='prescription'
+              onChange={value => onChangeHandle({ target: { name: 'prescription', value } })}
+            >
               <Select.Option value={'Так'}>Так</Select.Option>
               <Select.Option value={'Ні'}>Ні</Select.Option>
             </Select>

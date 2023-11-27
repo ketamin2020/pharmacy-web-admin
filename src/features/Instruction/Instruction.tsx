@@ -31,6 +31,10 @@ const renderTitle = name => (
 )
 
 const initData = {
+  description: {
+    title: 'Опис',
+    html: '',
+  },
   composition: {
     title: 'Склад',
     html: '',

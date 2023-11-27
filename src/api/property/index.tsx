@@ -5,6 +5,7 @@ const GET_PROPPERTIES = 'api/properties/get'
 const CREATE_PROPERTY = 'api/properties/create'
 const UPDATE_PROPERTY = 'api/properties/update'
 const DELETE_PROPERTY = 'api/properties/delete'
+const COPY_PROPERTY = 'api/properties/copy'
 
 export const getProperties = params => {
   return axiosInstance.get<AxiosResponse<{ data: object }>>(GET_PROPPERTIES, { params }).then(res => res?.data?.data)
@@ -17,4 +18,7 @@ export const updateProperty = params => {
 }
 export const deleteProperty = id => {
   return axiosInstance.delete<AxiosResponse<{ data: object }>>(`${DELETE_PROPERTY}?id=${id}`).then(res => res)
+}
+export const copyProperty = id => {
+  return axiosInstance.post<AxiosResponse<{ data: object }>>(`${COPY_PROPERTY}?id=${id}`).then(res => res.data.data)
 }

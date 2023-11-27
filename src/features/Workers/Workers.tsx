@@ -147,7 +147,7 @@ export const Workers = () => {
   })
 
   const tableActionProps = record => ({
-    todos: ['delete', 'edit'],
+    todos: ['delete'],
     callbacks: [() => handleDelete(record.id), () => null],
     preloaders: [],
     disabled: [false, false],
@@ -305,7 +305,9 @@ export const Workers = () => {
           style={{ width: '100%' }}
           placeholder='Position'
           labelInValue
-          onChange={value => onChangeHandle({ target: { name: 'position', value } })}
+          onChange={value => {
+            onChangeHandle({ target: { name: 'position', value: value?.value } })
+          }}
         >
           <Select.Option value={'Admin'}>Admin</Select.Option>
           <Select.Option value={'Worker'}>Worker</Select.Option>

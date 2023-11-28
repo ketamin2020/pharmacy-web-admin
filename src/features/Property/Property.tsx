@@ -330,18 +330,18 @@ export const Property = () => {
 
   const fetchSubstanceList = async () => {
     try {
-      const { data } = await getSubstances()
+      const res = await getSubstances()
 
-      setOptions(data)
+      setOptions(res)
     } catch (error) {
       notification('error', 'Something went wrong!')
     }
   }
   const fetchMakersList = async () => {
     try {
-      const { data } = await getMakers()
+      const res = await getMakers()
 
-      setMakers(data)
+      setMakers(res)
     } catch (error) {
       notification('error', 'Something went wrong!')
     }
@@ -627,6 +627,8 @@ export const Property = () => {
                 { label: 'Іншні товари з нерегульованою націнкою', value: 3 },
                 { label: 'РРЦ', value: 4 },
               ]}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           <Row>
@@ -641,6 +643,8 @@ export const Property = () => {
                 { label: 'Товари', value: 3 },
                 { label: 'Інше', value: 4 },
               ]}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
 
@@ -664,6 +668,8 @@ export const Property = () => {
               placeholder='Main Group'
               value={state?.groups?.main_group?.value || null}
               options={groups.map(item => ({ value: item.id, label: item.group_name }))}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           {!!state?.groups?.main_group?.value && (
@@ -682,6 +688,8 @@ export const Property = () => {
                 value={state?.groups?.first_lavel_group?.value || null}
                 placeholder='First Group'
                 options={firstLavelGroup?.map(item => ({ value: item.id, label: item.group_name }))}
+                filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                showSearch
               />
             </Row>
           )}
@@ -702,6 +710,8 @@ export const Property = () => {
                 value={state?.groups?.second_lavel_group?.value || null}
                 placeholder='Second Group'
                 options={secondLavelGroup?.map(item => ({ value: item.id, label: item.group_name }))}
+                filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+                showSearch
               />
             </Row>
           )}
@@ -718,6 +728,8 @@ export const Property = () => {
               options={options?.map(item => ({ value: item.id, label: item.name_ua }))}
               value={state.active_ingredient.value || null}
               onChange={value => onChangeHandle({ target: { name: 'active_ingredient', value: value } })}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
 
@@ -734,6 +746,8 @@ export const Property = () => {
               placeholder='Trade Name'
               onChange={value => onChangeHandle({ target: { name: 'marked_name', value } })}
               value={state.marked_name.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
 
@@ -761,13 +775,21 @@ export const Property = () => {
               value={state.maker.value || null}
               placeholder='Makers'
               options={makers?.map(item => ({ value: item.id, label: item.full_name }))}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
 
           <Row>
             <p>Імпорт</p>
 
-            <Select value={state.imported.value} name='imported' onChange={onChangeHandle}>
+            <Select
+              value={state.imported.value}
+              name='imported'
+              onChange={onChangeHandle}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
+            >
               <Select.Option value={'Так'}>Так</Select.Option>
               <Select.Option value={'Ні'}>Ні</Select.Option>
             </Select>
@@ -786,6 +808,8 @@ export const Property = () => {
               options={dosage?.map(item => ({ value: item.id, label: item.name }))}
               onChange={value => onChangeHandle({ target: { name: 'dosage', value } })}
               value={state.dosage.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           <Row>
@@ -801,6 +825,8 @@ export const Property = () => {
               options={forms?.map(item => ({ value: item.id, label: item.name }))}
               onChange={value => onChangeHandle({ target: { name: 'production_form', value } })}
               value={state.production_form.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           <Row>
@@ -810,6 +836,8 @@ export const Property = () => {
               value={state.prescription.value}
               name='prescription'
               onChange={value => onChangeHandle({ target: { name: 'prescription', value } })}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               <Select.Option value={'Так'}>Так</Select.Option>
               <Select.Option value={'Ні'}>Ні</Select.Option>
@@ -828,6 +856,8 @@ export const Property = () => {
               options={route?.map(item => ({ value: item.id, label: item.name }))}
               onChange={value => onChangeHandle({ target: { name: 'administration_route', value } })}
               value={state.administration_route.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           <Row>
@@ -843,6 +873,8 @@ export const Property = () => {
               options={quantity?.map(item => ({ value: item.id, label: item.name }))}
               onChange={value => onChangeHandle({ target: { name: 'quantity', value } })}
               value={state.quantity.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           <Row>
@@ -859,6 +891,8 @@ export const Property = () => {
                 })
               }
               name='expiration'
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               <Select.Option value={'1 рік'}>1 рік</Select.Option>
               <Select.Option value={'2 роки'}>2 роки</Select.Option>
@@ -882,6 +916,8 @@ export const Property = () => {
               options={temperature?.map(item => ({ value: item.id, label: item.name }))}
               onChange={value => onChangeHandle({ target: { name: 'storage_temperature', value } })}
               value={state.storage_temperature.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
           <Row>
@@ -897,6 +933,8 @@ export const Property = () => {
               options={packages?.map(item => ({ value: item.id, label: item.name }))}
               onChange={value => onChangeHandle({ target: { name: 'package', value } })}
               value={state.package.value || null}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             />
           </Row>
 
@@ -909,6 +947,8 @@ export const Property = () => {
               value={warnings.allergy_warning.value}
               onChange={value => onChangeWarnings({ target: { value, name: 'allergy_warning' } })}
               name='allergy_warning'
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
@@ -925,6 +965,8 @@ export const Property = () => {
               value={warnings.diabetes_warning.value}
               name='diabetes_warning'
               onChange={value => onChangeWarnings({ target: { value, name: 'diabetes_warning' } })}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
@@ -941,6 +983,8 @@ export const Property = () => {
               value={warnings.driving_warning.value}
               onChange={value => onChangeWarnings({ target: { value, name: 'driving_warning' } })}
               name='driving_warning'
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
@@ -956,6 +1000,8 @@ export const Property = () => {
             <Select
               value={warnings.pregnancy_warning.value}
               onChange={value => onChangeWarnings({ target: { value, name: 'pregnancy_warning' } })}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
@@ -971,6 +1017,8 @@ export const Property = () => {
               value={warnings.breastfeeding_warning.value}
               onChange={value => onChangeWarnings({ target: { value, name: 'breastfeeding_warning' } })}
               name='breastfeeding_warning'
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
@@ -986,6 +1034,8 @@ export const Property = () => {
               value={warnings.alcohol_warning.value}
               onChange={value => onChangeWarnings({ target: { value, name: 'alcohol_warning' } })}
               name='alcohol_warning'
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {warningsItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
@@ -1002,6 +1052,8 @@ export const Property = () => {
               placeholder='Expiration'
               name='child_warning'
               onChange={value => onChangeWarnings({ target: { value, name: 'child_warning' } })}
+              filterOption={(input, option) => option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0}
+              showSearch
             >
               {childItems.map((el, idx) => (
                 <Select.Option key={idx} value={el.value}>
